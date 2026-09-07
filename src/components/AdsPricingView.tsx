@@ -16,15 +16,23 @@ import {
   ArrowRight,
   DollarSign,
   ShieldCheck,
+  Layout,
+  Calculator,
+  Layers,
 } from 'lucide-react';
 import { MonetizationServiceType } from '../types';
 import { MonetizationModal } from './MonetizationModal';
 import { OWNER_PAYMENT_INFO } from '../services/storageService';
+import { AdFormatsGuide } from './AdFormatsGuide';
+import { AdPricingCalculator } from './AdPricingCalculator';
+
+export type AdsPricingTab = 'all' | 'formats' | 'packages' | 'calculator';
 
 export const AdsPricingView: React.FC = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState<MonetizationServiceType>('banner_ad');
   const [copied, setCopied] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<AdsPricingTab>('all');
 
   const handleOpenModal = (service: MonetizationServiceType) => {
     setSelectedService(service);
@@ -62,6 +70,19 @@ export const AdsPricingView: React.FC = () => {
               <Zap className="w-4 h-4" />
               <span>বিজ্ঞাপন বুকিং করুন</span>
             </button>
+
+            <button
+              onClick={() => {
+                setActiveTab('formats');
+                const el = document.getElementById('ad-formats-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="bg-purple-600 hover:bg-purple-500 text-white font-black px-5 py-3 rounded-2xl transition shadow-lg flex items-center gap-2 cursor-pointer text-sm border border-purple-400/40"
+            >
+              <Layout className="w-4 h-4 text-purple-200" />
+              <span>বিজ্ঞাপন ফরম্যাট ও মাপ দেখুন</span>
+            </button>
+
             <a
               href="tel:01315481879"
               className="bg-white/10 hover:bg-white/20 text-white font-bold px-5 py-3 rounded-2xl transition flex items-center gap-2 text-sm border border-white/20"
@@ -71,6 +92,60 @@ export const AdsPricingView: React.FC = () => {
             </a>
           </div>
         </div>
+      </div>
+
+      {/* Main Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto scrollbar-none">
+        <button
+          onClick={() => setActiveTab('all')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'all'
+              ? 'bg-slate-900 text-white shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>সবকিছু একনজরে</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('formats')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'formats'
+              ? 'bg-purple-700 text-white shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          <Layout className="w-3.5 h-3.5 text-purple-600" />
+          <span>বিজ্ঞাপন ফরম্যাট ও মাপ নির্দেশিকা (Ad Formats)</span>
+          <span className="text-[10px] bg-purple-100 text-purple-900 px-1.5 py-0.2 rounded font-extrabold">
+            ৬টি ফরম্যাট
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('packages')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'packages'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          <DollarSign className="w-3.5 h-3.5 text-emerald-600" />
+          <span>বিজ্ঞাপন প্যাকেজ ও রেটকার্ড</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('calculator')}
+          className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shrink-0 ${
+            activeTab === 'calculator'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+          }`}
+        >
+          <Calculator className="w-3.5 h-3.5 text-blue-600" />
+          <span>বিজ্ঞাপন খরচ ক্যালকুলেটর</span>
+        </button>
       </div>
 
       {/* Live Stats */}
@@ -94,221 +169,242 @@ export const AdsPricingView: React.FC = () => {
         })}
       </div>
 
-      {/* Pricing Packages Section */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900">বিজ্ঞাপন ও প্রমোশন রেটকার্ড</h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-              আপনার প্রয়োজন অনুযায়ী যেকোনো প্যাকেজ বেছে নিয়ে আজই প্রচার শুরু করুন
-            </p>
-          </div>
-          <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 shrink-0">
-            স্বচ্ছ মূল্য তালিকা (Fixed Rate)
-          </span>
+      {/* Conditional Rendering based on Tab */}
+      {(activeTab === 'all' || activeTab === 'formats') && (
+        <div id="ad-formats-section" className="space-y-4 pt-2">
+          <AdFormatsGuide
+            onSelectFormat={(srv, fmtName) => {
+              handleOpenModal(srv);
+            }}
+          />
         </div>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Banner Ads */}
-          <div className="bg-white rounded-3xl border-2 border-emerald-500 shadow-md p-5 flex flex-col justify-between relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider">
-              সবচেয়ে জনপ্রিয়
-            </div>
+      {(activeTab === 'all' || activeTab === 'packages') && (
+        /* Pricing Packages Section */
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2">
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
-                <Zap className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900">হোম ও পেজ ব্যানার বিজ্ঞাপন</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                অ্যাপের হোম পেজের শীর্ষে জামালপুরের প্রতিটি নাগরিকের সামনে বড় ব্যানার।
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900">বিজ্ঞাপন ও প্রমোশন রেটকার্ড</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                আপনার প্রয়োজন অনুযায়ী যেকোনো প্যাকেজ বেছে নিয়ে আজই প্রচার শুরু করুন
               </p>
-
-              <div className="my-4 p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-1.5 text-xs text-emerald-950">
-                <div className="flex justify-between font-bold">
-                  <span>৭ দিনের ব্যানার:</span>
-                  <span className="text-emerald-700 font-extrabold">৳ ৩০০</span>
-                </div>
-                <div className="flex justify-between font-bold">
-                  <span>১৫ দিনের ব্যানার:</span>
-                  <span className="text-emerald-700 font-extrabold">৳ ৫৫০</span>
-                </div>
-                <div className="flex justify-between font-bold">
-                  <span>৩০ দিনের সুপার ব্যানার:</span>
-                  <span className="text-emerald-700 font-extrabold">৳ ৯৫০</span>
-                </div>
-              </div>
-
-              <ul className="text-xs text-slate-600 space-y-2 mb-5">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>সরাসরি কল বা হোয়াটসঅ্যাপ লিংক</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>ফেসবুক পেজ / শোরুম লোকেশন লিংক</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                  <span>প্রতিদিন হাজারো নিশ্চিত ভিউ</span>
-                </li>
-              </ul>
             </div>
-
-            <button
-              onClick={() => handleOpenModal('banner_ad')}
-              className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <span>ব্যানার বিজ্ঞাপন দিন</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200 shrink-0">
+              স্বচ্ছ মূল্য তালিকা (Fixed Rate)
+            </span>
           </div>
 
-          {/* Card 2: Product Boost */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xs hover:shadow-md transition p-5 flex flex-col justify-between">
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
-                <TrendingUp className="w-6 h-6" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Banner Ads */}
+            <div className="bg-white rounded-3xl border-2 border-emerald-500 shadow-md p-5 flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-emerald-600 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                সবচেয়ে জনপ্রিয়
               </div>
-              <h3 className="text-lg font-black text-slate-900">মার্কেটপ্লেস পণ্য বুস্ট</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                আপনার ব্যবহৃত বাইক, মোবাইল, জমি বা পণ্য সবার আগে বিক্রয় করার জন্য টপ লিস্টিং।
-              </p>
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-black text-slate-900">হোম ও পেজ ব্যানার বিজ্ঞাপন</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  অ্যাপের হোম পেজের শীর্ষে জামালপুরের প্রতিটি নাগরিকের সামনে বড় ব্যানার।
+                </p>
 
-              <div className="my-4 p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-1.5 text-xs text-amber-950">
-                <div className="flex justify-between font-bold">
-                  <span>৩ দিন টপ বুস্ট:</span>
-                  <span className="text-amber-800 font-extrabold">৳ ৫০</span>
+                <div className="my-4 p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100 space-y-1.5 text-xs text-emerald-950">
+                  <div className="flex justify-between font-bold">
+                    <span>৭ দিনের ব্যানার:</span>
+                    <span className="text-emerald-700 font-extrabold">৳ ৩০০</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>১৫ দিনের ব্যানার:</span>
+                    <span className="text-emerald-700 font-extrabold">৳ ৫৫০</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>৩০ দিনের সুপার ব্যানার:</span>
+                    <span className="text-emerald-700 font-extrabold">৳ ৯৫০</span>
+                  </div>
                 </div>
-                <div className="flex justify-between font-bold">
-                  <span>৭ দিন সুপার বুস্ট:</span>
-                  <span className="text-amber-800 font-extrabold">৳ ১০০</span>
-                </div>
-                <div className="flex justify-between font-bold">
-                  <span>১৫ দিন ভিআইপি বুস্ট:</span>
-                  <span className="text-amber-800 font-extrabold">৳ ২০০</span>
-                </div>
+
+                <ul className="text-xs text-slate-600 space-y-2 mb-5">
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>সরাসরি কল বা হোয়াটসঅ্যাপ লিংক</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>ফেসবুক পেজ / শোরুম লোকেশন লিংক</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>প্রতিদিন হাজারো নিশ্চিত ভিউ</span>
+                  </li>
+                </ul>
               </div>
 
-              <ul className="text-xs text-slate-600 space-y-2 mb-5">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>গোল্ডেন ফ্রেম ও স্পেশাল 'Featured' ব্যাজ</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>সার্চ রেজাল্ট ও ক্যাটাগরির শীর্ষে অবস্থান</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                  <span>দ্রুত ক্রেতার সরাসরি কল সুবিধা</span>
-                </li>
-              </ul>
+              <button
+                onClick={() => handleOpenModal('banner_ad')}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>ব্যানার বিজ্ঞাপন দিন</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            <button
-              onClick={() => handleOpenModal('boost_product')}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <span>পণ্য বুস্ট করুন</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Card 3: Job Listing */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xs hover:shadow-md transition p-5 flex flex-col justify-between">
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
-                <Briefcase className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900">নিয়োগ বিজ্ঞপ্তি পোস্ট</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                এনজিও, শোরুম, ডায়াগনস্টিক বা প্রতিষ্ঠানের জন্য দ্রুত যোগ্য কর্মী নিয়োগ দিন।
-              </p>
-
-              <div className="my-4 p-3 bg-blue-50/60 rounded-2xl border border-blue-100 space-y-1.5 text-xs text-blue-950">
-                <div className="flex justify-between font-bold">
-                  <span>১৫ দিন স্ট্যান্ডার্ড সার্কুলার:</span>
-                  <span className="text-blue-700 font-extrabold">৳ ২০০</span>
+            {/* Card 2: Product Boost */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xs hover:shadow-md transition p-5 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mb-3">
+                  <TrendingUp className="w-6 h-6" />
                 </div>
-                <div className="flex justify-between font-bold">
-                  <span>৩০ দিন প্রিমিয়াম নিয়োগ পোস্ট:</span>
-                  <span className="text-blue-700 font-extrabold">৳ ৩৫০</span>
+                <h3 className="text-lg font-black text-slate-900">মার্কেটপ্লেস পণ্য বুস্ট</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  আপনার ব্যবহৃত বাইক, মোবাইল, জমি বা পণ্য সবার আগে বিক্রয় করার জন্য টপ লিস্টিং।
+                </p>
+
+                <div className="my-4 p-3 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-1.5 text-xs text-amber-950">
+                  <div className="flex justify-between font-bold">
+                    <span>৩ দিন টপ বুস্ট:</span>
+                    <span className="text-amber-800 font-extrabold">৳ ৫০</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>৭ দিন সুপার বুস্ট:</span>
+                    <span className="text-amber-800 font-extrabold">৳ ১০০</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>১৫ দিন ভিআইপি বুস্ট:</span>
+                    <span className="text-amber-800 font-extrabold">৳ ২০০</span>
+                  </div>
                 </div>
+
+                <ul className="text-xs text-slate-600 space-y-2 mb-5">
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>গোল্ডেন ফ্রেম ও স্পেশাল 'Featured' ব্যাজ</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>সার্চ রেজাল্ট ও ক্যাটাগরির শীর্ষে অবস্থান</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                    <span>দ্রুত ক্রেতার সরাসরি কল সুবিধা</span>
+                  </li>
+                </ul>
               </div>
 
-              <ul className="text-xs text-slate-600 space-y-2 mb-5">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                  <span>চাকরি তালিকার সবার ওপরে হাইলাইট</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                  <span>সরাসরি সিভি পাঠানো ও কল অপশন</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                  <span>অ্যাপের নোটিফিকেশনে চাকরির বার্তা</span>
-                </li>
-              </ul>
+              <button
+                onClick={() => handleOpenModal('boost_product')}
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>পণ্য বুস্ট করুন</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            <button
-              onClick={() => handleOpenModal('job_listing')}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <span>চাকরি পোস্ট করুন</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Card 4: Business & Doctor Listing */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-2xs hover:shadow-md transition p-5 flex flex-col justify-between">
-            <div>
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
-                <Store className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-black text-slate-900">ভেরিফাইড শপ ও পার্টনার</h3>
-              <p className="text-xs text-slate-500 mt-1">
-                আপনার দোকান, রেস্টুরেন্ট বা ক্লিনিককে ভেরিফাইড প্রতিষ্ঠান হিসেবে ব্রান্ডিং করুন।
-              </p>
-
-              <div className="my-4 p-3 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-1.5 text-xs text-purple-950">
-                <div className="flex justify-between font-bold">
-                  <span>১ মাস ভেরিফাইড শপ ব্যাজ:</span>
-                  <span className="text-purple-700 font-extrabold">৳ ৩০০</span>
+            {/* Card 3: Job Listing */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xs hover:shadow-md transition p-5 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                  <Briefcase className="w-6 h-6" />
                 </div>
-                <div className="flex justify-between font-bold">
-                  <span>৩ মাস পার্টনারশিপ প্যাক:</span>
-                  <span className="text-purple-700 font-extrabold">৳ ৭৫০</span>
+                <h3 className="text-lg font-black text-slate-900">নিয়োগ বিজ্ঞপ্তি পোস্ট</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  এনজিও, শোরুম, ডায়াগনস্টিক বা প্রতিষ্ঠানের জন্য দ্রুত যোগ্য কর্মী নিয়োগ দিন।
+                </p>
+
+                <div className="my-4 p-3 bg-blue-50/60 rounded-2xl border border-blue-100 space-y-1.5 text-xs text-blue-950">
+                  <div className="flex justify-between font-bold">
+                    <span>১৫ দিন স্ট্যান্ডার্ড সার্কুলার:</span>
+                    <span className="text-blue-700 font-extrabold">৳ ২০০</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>৩০ দিন প্রিমিয়াম নিয়োগ পোস্ট:</span>
+                    <span className="text-blue-700 font-extrabold">৳ ৩৫০</span>
+                  </div>
                 </div>
+
+                <ul className="text-xs text-slate-600 space-y-2 mb-5">
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>চাকরি তালিকার সবার ওপরে হাইলাইট</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>সরাসরি সিভি পাঠানো ও কল অপশন</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>অ্যাপের নোটিফিকেশনে চাকরির বার্তা</span>
+                  </li>
+                </ul>
               </div>
 
-              <ul className="text-xs text-slate-600 space-y-2 mb-5">
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                  <span>নীল ভেরিফাইড (Verified ☑️) ব্যাজ</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                  <span>গুগল ম্যাপ ও ঠিকানা ডিরেকশনে সংযুক্তি</span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
-                  <span>গ্রাহকদের কাছে সরাসরি শীর্ষ রেটিং</span>
-                </li>
-              </ul>
+              <button
+                onClick={() => handleOpenModal('job_listing')}
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>চাকরি পোস্ট করুন</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
 
-            <button
-              onClick={() => handleOpenModal('featured_business')}
-              className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <span>ব্যবসা লিস্টিং করুন</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+            {/* Card 4: Business & Doctor Listing */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-2xs hover:shadow-md transition p-5 flex flex-col justify-between">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
+                  <Store className="w-6 h-6" />
+                </div>
+                <h3 className="text-lg font-black text-slate-900">ভেরিফাইড শপ ও পার্টনার</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  আপনার দোকান, রেস্টুরেন্ট বা ক্লিনিককে ভেরিফাইড প্রতিষ্ঠান হিসেবে ব্রান্ডিং করুন।
+                </p>
+
+                <div className="my-4 p-3 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-1.5 text-xs text-purple-950">
+                  <div className="flex justify-between font-bold">
+                    <span>১ মাস ভেরিফাইড শপ ব্যাজ:</span>
+                    <span className="text-purple-700 font-extrabold">৳ ৩০০</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>৩ মাস পার্টনারশিপ প্যাক:</span>
+                    <span className="text-purple-700 font-extrabold">৳ ৭৫০</span>
+                  </div>
+                </div>
+
+                <ul className="text-xs text-slate-600 space-y-2 mb-5">
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <span>নীল ভেরিফাইড (Verified ☑️) ব্যাজ</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <span>গুগল ম্যাপ ও ঠিকানা ডিরেকশনে সংযুক্তি</span>
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                    <span>গ্রাহকদের কাছে সরাসরি শীর্ষ রেটিং</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button
+                onClick={() => handleOpenModal('featured_business')}
+                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl transition text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>ব্যবসা লিস্টিং করুন</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {(activeTab === 'all' || activeTab === 'calculator') && (
+        <div className="space-y-4">
+          <div className="border-t border-slate-200 pt-6">
+            <AdPricingCalculator />
+          </div>
+        </div>
+      )}
 
       {/* Official Payment Accounts Box */}
       <div className="bg-gradient-to-r from-purple-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-purple-800/40">

@@ -368,6 +368,7 @@ export interface WebsiteSettings {
   ownerPhotoUrl?: string;
   adSenseEnabled: boolean;
   maintenanceMode: boolean;
+  productionUrl?: string;
 }
 
 export type MfsProviderId =

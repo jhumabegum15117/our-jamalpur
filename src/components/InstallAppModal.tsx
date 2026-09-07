@@ -24,6 +24,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { generateSingleHtmlFile, generateProjectZip } from '../services/zipGenerator';
+import { storageService } from '../services/storageService';
 
 interface Props {
   isOpen: boolean;
@@ -80,7 +81,7 @@ export const InstallAppModal: React.FC<Props> = ({
   };
 
   const handleOpenInNewTab = () => {
-    window.open(window.location.href, '_blank');
+    window.open(storageService.getOfficialLiveUrl(), '_blank');
   };
 
   const handleInstallClick = async () => {

@@ -31,6 +31,7 @@ import {
   ShieldAlert,
   Share2,
   RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import { TabType, User as UserType, Upazila } from '../types';
 import { ThemeToggle } from './ThemeToggle';
@@ -43,6 +44,7 @@ interface Props {
   onOpenExportZip: () => void;
   onOpenInstallApp?: () => void;
   onOpenStorageCache?: () => void;
+  onOpenAppUpdate?: () => void;
   selectedUpazila?: Upazila;
   onOpenUpazilaModal?: () => void;
   currentUser: UserType | null;
@@ -56,6 +58,7 @@ export const Navbar: React.FC<Props> = ({
   onOpenExportZip,
   onOpenInstallApp,
   onOpenStorageCache,
+  onOpenAppUpdate,
   selectedUpazila = 'সকল উপজেলা',
   onOpenUpazilaModal,
   currentUser,
@@ -180,6 +183,20 @@ export const Navbar: React.FC<Props> = ({
                 <Smartphone className="w-4 h-4 text-amber-300 stroke-[2.5]" />
                 <span className="hidden md:inline font-bold">অ্যাপ ইনস্টল</span>
                 <span className="md:hidden font-bold">অ্যাপ</span>
+              </button>
+            )}
+
+            {/* Live Feature Update Button */}
+            {onOpenAppUpdate && (
+              <button
+                id="navbar-update-features-btn"
+                onClick={onOpenAppUpdate}
+                className="flex items-center gap-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs px-2.5 sm:px-3.5 py-2 rounded-xl shadow-xs border border-emerald-300/80 transition cursor-pointer active:scale-95"
+                title="নতুন কোনো ফিচার যোগ করা হলে এখানে ক্লিক করে তাৎক্ষণিক আপডেট আনুন"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
+                <span className="hidden xs:inline font-black">নতুন ফিচার আনুন</span>
+                <span className="xs:hidden font-black">আপডেট</span>
               </button>
             )}
 
@@ -389,6 +406,40 @@ export const Navbar: React.FC<Props> = ({
             </div>
             <ThemeToggle variant="compact" />
           </div>
+
+          {/* Mobile Feature Update Card */}
+          {onOpenAppUpdate && (
+            <div className="p-3.5 bg-gradient-to-br from-emerald-950 via-teal-950 to-slate-900 rounded-2xl border border-emerald-500/40 text-white space-y-2.5 shadow-md">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-amber-300 flex items-center justify-center border border-emerald-400/30">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-white">নতুন ফিচার ও আপডেট সিঙ্ক</h4>
+                    <span className="text-[10px] text-emerald-300">সরাসরি লাইভ সার্ভার সংযোগ</span>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[9px] uppercase">
+                  Live Sync
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                কোডে নতুন ফিচার যোগ করা হলে নিচের বাটনে ট্যাপ করলেই আপনার ফোনে সাথে সাথে নতুন ফিচার লোড হয়ে যাবে।
+              </p>
+              <button
+                id="mobile-drawer-update-features-btn"
+                onClick={() => {
+                  onOpenAppUpdate();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-md cursor-pointer transition active:scale-95"
+              >
+                <RefreshCw className="w-4 h-4 stroke-[2.5]" />
+                <span>নতুন ফিচার ও আপডেট আনুন</span>
+              </button>
+            </div>
+          )}
 
           <div className="font-bold text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
             প্রধান মেনু

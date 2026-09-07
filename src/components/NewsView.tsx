@@ -113,14 +113,15 @@ export const NewsView: React.FC<Props> = ({ selectedNews: initialNews }) => {
   };
 
   const handleShare = (title: string, summary: string) => {
+    const liveUrl = storageService.getOfficialLiveUrl();
     if (navigator.share) {
       navigator.share({
         title,
         text: summary,
-        url: window.location.href,
+        url: liveUrl,
       }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(`${title} - Our Jamalpur: ${window.location.href}`);
+      navigator.clipboard.writeText(`${title} - Our Jamalpur: ${liveUrl}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

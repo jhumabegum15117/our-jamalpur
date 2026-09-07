@@ -35,6 +35,7 @@ export const initialSettings: WebsiteSettings = {
   ownerPhotoUrl: '',
   adSenseEnabled: true,
   maintenanceMode: false,
+  productionUrl: 'https://ourjamalpur15117.web.app',
 };
 
 export const initialMfsProviders: MfsProvider[] = [

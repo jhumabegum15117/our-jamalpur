@@ -287,15 +287,16 @@ export const SundayCertificateModal: React.FC<Props> = ({
   };
 
   const handleShare = () => {
-    const text = `🏆 আমি Our Jamalpur রবিবার কুইজ প্রতিযোগিতায় সনদপত্র অর্জন করেছি! সনদ নং: ${activeCert?.certificateNo}`;
+    const liveUrl = storageService.getOfficialLiveUrl();
+    const text = `🏆 আমি Our Jamalpur রবিবার কুইজ প্রতিযোগিতায় সনদপত্র অর্জন করেছি! সনদ নং: ${activeCert?.certificateNo} (যাচাই করুন: ${liveUrl})`;
     if (navigator.share) {
       navigator.share({
         title: 'Our Jamalpur Sunday Quiz Certificate',
         text,
-        url: window.location.href,
+        url: liveUrl,
       }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(text);
+      navigator.clipboard.writeText(`${text} - ${liveUrl}`);
       setIsCopied(true);
       setTimeout(() => setIsCopied(false), 2500);
     }

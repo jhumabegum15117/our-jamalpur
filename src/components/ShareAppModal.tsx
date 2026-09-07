@@ -23,31 +23,30 @@ interface Props {
 }
 
 export const ShareAppModal: React.FC<Props> = ({ isOpen, onClose, onOpenAppUpdate }) => {
-  const [copied, setCopied] = useState(false);
+  const [copiedType, setCopiedType] = useState<'official' | 'bypass' | null>(null);
   const [showQr, setShowQr] = useState(false);
 
   if (!isOpen) return null;
 
-  // Generate always-fresh share URL with cache-busting parameter
-  const shareUrl = storageService.generateShareableLatestUrl('portal-share');
-  const cleanDisplayUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : 'https://ais-pre-baz2tz2hva2o67n245fask-187307553941.asia-east1.run.app/';
+  const officialProdUrl = storageService.getOfficialLiveUrl();
+  const updateBypassUrl = `${officialProdUrl}?v=latest&update=true`;
 
-  const shareText = `📲 Our Jamalpur (ডিজিটাল জামালপুর পোর্টাল ও মার্কেটপ্লেস)\n\nজামালপুর জেলার সব খবর, ৭ উপজেলার লাইভ আবহাওয়া, বাস ও ট্রেন সময়সূচী, ডাক্তার ও হাসপাতাল, জরুরি হেল্পলাইন, কেনাবেচা এবং সকল সরকারি-বেসরকারি সেবা এক ক্লিকে!\n\nসবসময় সর্বশেষ আপডেট ভার্সন পেতে লিংকে ক্লিক করুন:\n${shareUrl}`;
+  const shareText = `📲 Our Jamalpur (ডিজিটাল জামালপুর পোর্টাল ও মার্কেটপ্লেস)\n\nজামালপুর জেলার সব খবর, ৭ উপজেলার লাইভ আবহাওয়া, বাস ও ট্রেন সময়সূচী, ডাক্তার ও হাসপাতাল, জরুরি হেল্পলাইন, কেনাবেচা এবং সকল সরকারি-বেসরকারি সেবা এক ক্লিকে!\n\nসবসময় সর্বশেষ আপডেট ভার্সন পেতে লিংকে ক্লিক করুন:\n${officialProdUrl}`;
 
-  const handleCopyLink = async () => {
+  const handleCopyLink = async (url: string, type: 'official' | 'bypass') => {
     try {
       if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
+        await navigator.clipboard.writeText(url);
       } else {
         const input = document.createElement('input');
-        input.value = shareUrl;
+        input.value = url;
         document.body.appendChild(input);
         input.select();
         document.execCommand('copy');
         document.body.removeChild(input);
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
+      setCopiedType(type);
+      setTimeout(() => setCopiedType(null), 3000);
     } catch (e) {
       console.error('Copy failed', e);
     }
@@ -59,13 +58,13 @@ export const ShareAppModal: React.FC<Props> = ({ isOpen, onClose, onOpenAppUpdat
         await navigator.share({
           title: 'Our Jamalpur - ডিজিটাল জামালপুর পোর্টাল ও মার্কেটপ্লেস',
           text: 'জামালপুর জেলার সব খবর, মার্কেটপ্লেস, পরিবহন, ডাক্তার ও জরুরি সেবার ডিজিটাল প্ল্যাটফর্ম।',
-          url: shareUrl,
+          url: officialProdUrl,
         });
       } catch (e) {
         console.log('Share canceled or not supported');
       }
     } else {
-      handleCopyLink();
+      handleCopyLink(officialProdUrl, 'official');
     }
   };
 
@@ -75,19 +74,19 @@ export const ShareAppModal: React.FC<Props> = ({ isOpen, onClose, onOpenAppUpdat
   };
 
   const handleFacebookShare = () => {
-    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedUrl = encodeURIComponent(officialProdUrl);
     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
   };
 
   const handleTelegramShare = () => {
-    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedUrl = encodeURIComponent(officialProdUrl);
     const encodedText = encodeURIComponent('Our Jamalpur - ডিজিটাল জামালপুর পোর্টাল ও মার্কেটপ্লেস');
     window.open(`https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`, '_blank');
   };
 
-  // QR Code URL using public fast QR API
+  // QR Code URL pointing directly to official live url
   const qrCodeImgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-    shareUrl
+    officialProdUrl
   )}&bgcolor=ffffff&color=047857&margin=1`;
 
   return (
@@ -114,47 +113,47 @@ export const ShareAppModal: React.FC<Props> = ({ isOpen, onClose, onOpenAppUpdat
               <div className="flex items-center gap-2">
                 <h3 className="text-lg sm:text-xl font-black text-white">শেয়ার ও লাইভ লিঙ্ক</h3>
                 <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black text-[10px] uppercase">
-                  Latest Version
+                  Live Version
                 </span>
               </div>
               <p className="text-xs text-emerald-100 mt-0.5">
-                যেকোনো ডিভাইসে ঢুকলেই স্বয়ংক্রিয়ভাবে সর্বশেষ আপডেটেড ভার্সন ওপেন হবে
+                সর্বশেষ আপডেটেড সংস্করণ ও অফিশিয়াল লিংক যেকোনো ডিভাইসের জন্য প্রস্তুত
               </p>
             </div>
           </div>
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 sm:p-6 space-y-5">
-          {/* Smart Link Box */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+        <div className="p-5 sm:p-6 space-y-4">
+          {/* Official Production URL Card */}
+          <div className="bg-emerald-50/70 dark:bg-slate-800/80 border border-emerald-200 dark:border-slate-700 rounded-2xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>সর্বশেষ আপডেট সংস্করণ লিংক:</span>
+              <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>অফিসিয়াল লাইভ ওয়েবসাইট লিংক:</span>
               </span>
-              <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-md border border-emerald-300/50 dark:border-emerald-700/50">
-                ক্যাশ-বাইপাস লাইভ লিংক
+              <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 rounded-md border border-emerald-300/60 dark:border-emerald-700/60">
+                Official Production
               </span>
             </div>
 
-            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 shadow-inner">
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-emerald-300 dark:border-slate-700 rounded-xl p-2.5 shadow-inner">
               <input
                 type="text"
                 readOnly
-                value={shareUrl}
-                className="w-full bg-transparent text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none select-all truncate"
+                value={officialProdUrl}
+                className="w-full bg-transparent text-xs text-slate-800 dark:text-slate-100 font-mono font-bold focus:outline-none select-all truncate"
               />
               <button
-                id="btn-copy-share-url"
-                onClick={handleCopyLink}
+                id="btn-copy-official-url"
+                onClick={() => handleCopyLink(officialProdUrl, 'official')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-black shrink-0 transition flex items-center gap-1.5 cursor-pointer ${
-                  copied
+                  copiedType === 'official'
                     ? 'bg-emerald-600 text-white shadow-xs'
                     : 'bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300'
                 }`}
               >
-                {copied ? (
+                {copiedType === 'official' ? (
                   <>
                     <Check className="w-3.5 h-3.5" />
                     <span>কপি হয়েছে!</span>
@@ -162,14 +161,70 @@ export const ShareAppModal: React.FC<Props> = ({ isOpen, onClose, onOpenAppUpdat
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5" />
-                    <span>কপি লিংক</span>
+                    <span>কপি</span>
+                  </>
+                )}
+              </button>
+              <a
+                href={officialProdUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-1.5 text-slate-500 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                title="ব্রাউজারে ওপেন করুন"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-1.5 font-medium">
+              🌐 মূল লাইভ ঠিকানা: <strong>https://ourjamalpur15117.web.app</strong>
+            </p>
+          </div>
+
+          {/* Cache-Bypass Latest Version URL Card */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <RefreshCw className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                <span>সর্বশেষ আপডেট সংস্করণ লিংক (ক্যাশ বাইপাস):</span>
+              </span>
+              <span className="text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-950 px-2 py-0.5 rounded-md border border-teal-300/50 dark:border-teal-700/50">
+                Force Update
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-2.5 shadow-inner">
+              <input
+                type="text"
+                readOnly
+                value={updateBypassUrl}
+                className="w-full bg-transparent text-xs text-slate-800 dark:text-slate-200 font-mono focus:outline-none select-all truncate"
+              />
+              <button
+                id="btn-copy-update-bypass-url"
+                onClick={() => handleCopyLink(updateBypassUrl, 'bypass')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-black shrink-0 transition flex items-center gap-1.5 cursor-pointer ${
+                  copiedType === 'bypass'
+                    ? 'bg-teal-600 text-white shadow-xs'
+                    : 'bg-teal-100 hover:bg-teal-200 dark:bg-teal-950 dark:hover:bg-teal-900 text-teal-800 dark:text-teal-300'
+                }`}
+              >
+                {copiedType === 'bypass' ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    <span>কপি হয়েছে!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>কপি</span>
                   </>
                 )}
               </button>
             </div>
 
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-              💡 এই লিংকে ক্লিক করলে ব্রাউজার ক্যাশ এড়িয়ে সরাসরি আমাদের পোর্টালে যুক্ত হওয়া সব নতুন ফিচার, খবর ও আপডেট দেখা যাবে।
+              💡 কোনো ইউজারের ডিভাইসে পুরনো ক্যাশ জমে থাকলে এই লিংকটি পাঠালে সাথে সাথে নতুন সব আপডেট ও ফিচার লোড হবে।
             </p>
           </div>
 

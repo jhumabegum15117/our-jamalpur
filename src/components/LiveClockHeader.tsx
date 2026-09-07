@@ -10,6 +10,7 @@ interface Props {
   onOpenExportZip?: () => void;
   onOpenInstallApp?: () => void;
   onOpenStorageCache?: () => void;
+  onOpenAppUpdate?: () => void;
 }
 
 export const LiveClockHeader: React.FC<Props> = ({
@@ -19,6 +20,7 @@ export const LiveClockHeader: React.FC<Props> = ({
   onOpenExportZip,
   onOpenInstallApp,
   onOpenStorageCache,
+  onOpenAppUpdate,
 }) => {
   const [time, setTime] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
@@ -109,6 +111,18 @@ export const LiveClockHeader: React.FC<Props> = ({
             >
               <HardDrive className="w-3 h-3 shrink-0" />
               <span>{isOnline ? 'ক্যাশ সিঙ্ক' : 'অফলাইন মোড'}</span>
+            </button>
+          )}
+
+          {onOpenAppUpdate && (
+            <button
+              id="topbar-update-app-btn"
+              onClick={onOpenAppUpdate}
+              className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 font-black px-2.5 py-1 rounded shadow-xs text-[11px] cursor-pointer transition active:scale-95"
+              title="নতুন ফিচার যোগ করা হলে এখানে ক্লিক করে তাৎক্ষণিক আপডেট আনুন"
+            >
+              <RefreshCw className="w-3 h-3 text-slate-950 stroke-[2.5]" />
+              <span>নতুন ফিচার আনুন</span>
             </button>
           )}
 

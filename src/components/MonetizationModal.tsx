@@ -157,6 +157,7 @@ export const MonetizationModal: React.FC<Props> = ({
   const [advertiserName, setAdvertiserName] = useState('');
   const [advertiserPhone, setAdvertiserPhone] = useState('');
   const [businessOrTitle, setBusinessOrTitle] = useState(targetTitle || '');
+  const [selectedFormat, setSelectedFormat] = useState('হোম পেজ হেডার ব্যানার (728 × 180 px)');
   const [details, setDetails] = useState('');
   const [linkOrSocial, setLinkOrSocial] = useState('');
   const [senderNumber, setSenderNumber] = useState('');
@@ -193,7 +194,9 @@ export const MonetizationModal: React.FC<Props> = ({
         advertiserName: advertiserName.trim(),
         advertiserPhone: advertiserPhone.trim(),
         businessOrTitle: businessOrTitle.trim() || targetTitle || 'বিজ্ঞাপন আবেদন',
-        details: details.trim(),
+        details: serviceType === 'banner_ad'
+          ? `[নির্বাচিত ফরম্যাট: ${selectedFormat}] ${details.trim()}`
+          : details.trim(),
         linkOrSocial: linkOrSocial.trim(),
         targetId: targetId,
         paymentMethod,
@@ -380,6 +383,46 @@ export const MonetizationModal: React.FC<Props> = ({
                     className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white"
                   />
                 </div>
+
+                {serviceType === 'banner_ad' && (
+                  <div className="p-3 bg-emerald-50/70 rounded-2xl border border-emerald-200/80 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-extrabold text-emerald-950">
+                        📐 বিজ্ঞাপনের নির্দিষ্ট ব্যানার ফরম্যাট ও মাপ
+                      </label>
+                      <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">
+                        পছন্দ অনুযায়ী
+                      </span>
+                    </div>
+                    <select
+                      value={selectedFormat}
+                      onChange={(e) => setSelectedFormat(e.target.value)}
+                      className="w-full px-3 py-2 text-xs rounded-xl border border-emerald-300 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 bg-white font-medium text-slate-800"
+                    >
+                      <option value="হোম পেজ হেডার ব্যানার (728 × 180 px)">
+                        হোম পেজ হেডার ব্যানার (728 × 180 px / মোবাইল 360 × 120 px)
+                      </option>
+                      <option value="ইন-ফিড / কন্টেন্ট ব্যানার (300 × 250 px)">
+                        ইন-ফিড / কন্টেন্ট ব্যানার (300 × 250 px - খবরের মাঝে)
+                      </option>
+                      <option value="মার্কেটপ্লেস স্পন্সরড কার্ড (600 × 600 px)">
+                        মার্কেটপ্লেস স্পন্সরড কার্ড (600 × 600 px স্কয়ার)
+                      </option>
+                      <option value="ফুল-উইডথ প্রমো নোটিশ স্ট্রিপ (1200 × 160 px)">
+                        ফুল-উইডথ প্রমো নোটিশ স্ট্রিপ (1200 × 160 px)
+                      </option>
+                      <option value="অ্যাপ ওপেন স্প্ল্যাশ / পপ-আপ ব্যানার (600 × 600 px)">
+                        অ্যাপ ওপেন স্প্ল্যাশ / পপ-আপ ব্যানার (600 × 600 px)
+                      </option>
+                      <option value="নিয়োগ বিজ্ঞপ্তি ও বিজনেস ফ্লায়ার (800 × 1200 px)">
+                        নিয়োগ বিজ্ঞপ্তি ও বিজনেস ফ্লায়ার (800 × 1200 px পোস্টার)
+                      </option>
+                    </select>
+                    <p className="text-[10px] text-emerald-800 leading-tight">
+                      💡 রেডি ব্যানার নেই? কোনো সমস্যা নেই! বুকিংয়ের পর আমাদের ডিজাইনার টিম বিনামূল্যে আপনার জন্য ব্যানার তৈরি করে দেবে।
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>

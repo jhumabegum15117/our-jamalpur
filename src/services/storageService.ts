@@ -824,7 +824,17 @@ export const storageService = {
     };
   },
 
+  getOfficialLiveUrl: (): string => {
+    try {
+      const s = storageService.getSettings();
+      return s.productionUrl || 'https://ourjamalpur15117.web.app';
+    } catch {
+      return 'https://ourjamalpur15117.web.app';
+    }
+  },
+
   getAppVersionInfo: () => {
+    const officialUrl = storageService.getOfficialLiveUrl();
     return {
       version: '4.2.0',
       versionName: 'v4.2 (Live Cloud & Fast Sync Edition)',
@@ -832,12 +842,13 @@ export const storageService = {
       lastSync: storageService.getLastCacheSyncTime(),
       author: 'মাসুদ রানা',
       status: 'সর্বশেষ সক্রিয় সংস্করণ (Up to Date)',
+      officialUrl,
     };
   },
 
   generateShareableLatestUrl: (customParam?: string) => {
     try {
-      const baseUrl = window.location.origin + window.location.pathname;
+      const baseUrl = storageService.getOfficialLiveUrl();
       const ts = Date.now();
       const params = new URLSearchParams();
       params.set('v', 'latest');
@@ -847,7 +858,7 @@ export const storageService = {
       }
       return `${baseUrl}?${params.toString()}`;
     } catch {
-      return 'https://ais-pre-baz2tz2hva2o67n245fask-187307553941.asia-east1.run.app/?v=latest';
+      return 'https://ourjamalpur15117.web.app?v=latest';
     }
   },
 

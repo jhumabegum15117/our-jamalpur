@@ -82,12 +82,13 @@ export const LiveNewsTicker: React.FC<Props> = ({ noticeText, onNavigate }) => {
   }, [headlines, activeCategory]);
 
   const handleShare = (item: LiveHeadline) => {
-    const shareText = `${item.title} — উৎস: ${item.source} (Our Jamalpur)`;
+    const liveUrl = storageService.getOfficialLiveUrl();
+    const shareText = `${item.title} — উৎস: ${item.source} (Our Jamalpur: ${liveUrl})`;
     if (navigator.share) {
       navigator.share({
         title: item.title,
         text: shareText,
-        url: window.location.href,
+        url: liveUrl,
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(shareText);

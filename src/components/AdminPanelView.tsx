@@ -35,10 +35,13 @@ import {
   Lock,
   Send,
   CheckCircle,
+  Calculator,
 } from 'lucide-react';
 import { storageService, OWNER_PAYMENT_INFO } from '../services/storageService';
 import { NewsItem, ProductItem, SiteSettings, MonetizationRequest, AdBannerItem } from '../types';
 import { ThemeToggle } from './ThemeToggle';
+import { AdminMonetizationChart } from './AdminMonetizationChart';
+import { AdPricingCalculator } from './AdPricingCalculator';
 
 interface Props {
   onRefresh: () => void;
@@ -47,7 +50,7 @@ interface Props {
 }
 
 export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, onOpenShareApp }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'monetization' | 'app_control' | 'news' | 'products' | 'settings'>('dashboard');
+  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'monetization' | 'ad_calculator' | 'app_control' | 'news' | 'products' | 'settings'>('dashboard');
   const [copiedLinkType, setCopiedLinkType] = useState<string | null>(null);
   const [isUpdatingApp, setIsUpdatingApp] = useState(false);
   const [isSyncingCache, setIsSyncingCache] = useState(false);
@@ -84,6 +87,7 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
   const [facebookProfile, setFacebookProfile] = useState(settings.facebookProfile || '');
   const [contactPhone, setContactPhone] = useState(settings.contactPhone);
   const [contactEmail, setContactEmail] = useState(settings.contactEmail);
+  const [productionUrl, setProductionUrl] = useState(settings.productionUrl || 'https://ourjamalpur15117.web.app');
   const [settingsSaved, setSettingsSaved] = useState(false);
   const [copiedTrx, setCopiedTrx] = useState<string | null>(null);
 
@@ -138,6 +142,7 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
       facebookProfile,
       contactPhone,
       contactEmail,
+      productionUrl: productionUrl.trim() || 'https://ourjamalpur15117.web.app',
     });
     setSettings(updated);
     setSettingsSaved(true);
@@ -206,6 +211,30 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
     }
   };
 
+  const handleApplyFromCalculator = (params: {
+    placement: 'home_top' | 'marketplace' | 'news' | 'sidebar';
+    durationDays: number;
+    estimatedPrice: number;
+    adType: string;
+    advertiserNote?: string;
+  }) => {
+    setNewBannerPlacement(params.placement);
+    setNewBannerAmount(String(params.estimatedPrice));
+    const d = new Date();
+    d.setDate(d.getDate() + params.durationDays);
+    setNewBannerExpiry(d.toISOString().split('T')[0]);
+    if (params.advertiserNote && !newBannerSubtitle) {
+      setNewBannerSubtitle(params.advertiserNote);
+    }
+    setActiveAdminTab('monetization');
+    setTimeout(() => {
+      const el = document.getElementById('add-banner-form-container');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 150);
+  };
+
   const totalEarned = monetizationRequests
     .filter((r) => r.status === 'approved')
     .reduce((acc, curr) => acc + curr.amount, 0) +
@@ -237,6 +266,7 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
           {[
             { id: 'dashboard', label: 'পরিসংখ্যান', icon: Layers },
             { id: 'monetization', label: `ইনকাম ও বিজ্ঞাপন (${pendingCount > 0 ? `+${pendingCount}` : 'সক্রিয়'})`, icon: DollarSign, highlight: pendingCount > 0 },
+            { id: 'ad_calculator', label: 'বিজ্ঞাপন ক্যালকুলেটর', icon: Calculator },
             { id: 'app_control', label: 'অ্যাপ লিংক ও আপডেট', icon: Share2 },
             { id: 'news', label: 'সংবাদ', icon: Newspaper },
             { id: 'products', label: 'পণ্য নিয়ন্ত্রণ', icon: ShoppingBag },
@@ -333,6 +363,12 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
               </button>
             </div>
           </div>
+
+          {/* Monetization & Ad Analytics Chart */}
+          <AdminMonetizationChart
+            monetizationRequests={monetizationRequests}
+            adBanners={adBanners}
+          />
         </div>
       )}
 
@@ -390,6 +426,42 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
             >
               হেল্পলাইন চেক
             </a>
+          </div>
+
+          {/* Interactive Monetization Analytics Chart (Recharts) */}
+          <AdminMonetizationChart
+            monetizationRequests={monetizationRequests}
+            adBanners={adBanners}
+          />
+
+          {/* Quick Ad Pricing Calculator Card in Monetization Tab */}
+          <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 rounded-3xl p-5 sm:p-6 text-white border border-purple-700/50 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-purple-600/30 text-amber-300 flex items-center justify-center border border-purple-500/40 shrink-0">
+                <Calculator className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-extrabold text-sm sm:text-base text-white">
+                    ইন্টারেক্টিভ অ্যাড প্রাইসিং ও কোটেশন ক্যালকুলেটর
+                  </h4>
+                  <span className="text-[10px] bg-amber-400 text-slate-950 px-2 py-0.5 rounded-full font-black">
+                    নতুন টুল
+                  </span>
+                </div>
+                <p className="text-xs text-purple-200/90 leading-relaxed">
+                  বিজ্ঞাপনের মেয়াদ (দিন), প্লেসমেন্ট এবং ধরন (ব্যানার বা ভিডিও) দিয়ে তাৎক্ষণিক বাজারমূল্য হিসাব করুন এবং ক্লায়েন্টের জন্য কোটেশন তৈরি করুন।
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveAdminTab('ad_calculator')}
+              className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition flex items-center gap-2 shrink-0 cursor-pointer active:scale-95"
+            >
+              <Calculator className="w-4 h-4" />
+              <span>ক্যালকুলেটরে হিসাব করুন</span>
+            </button>
           </div>
 
           {/* Pending Requests Section */}
@@ -531,10 +603,21 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
           {/* Add Local Ad Banner & Active Banners Management */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Create Banner Form */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-2xs">
-              <div className="flex items-center gap-2 mb-4">
-                <PlusCircle className="w-5 h-5 text-purple-700" />
-                <h3 className="font-extrabold text-base text-slate-900">নতুন ব্যানার বিজ্ঞাপন যোগ করুন</h3>
+            <div id="add-banner-form-container" className="bg-white rounded-3xl border border-slate-200 p-5 shadow-2xs transition-all">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <PlusCircle className="w-5 h-5 text-purple-700" />
+                  <h3 className="font-extrabold text-base text-slate-900">নতুন ব্যানার বিজ্ঞাপন যোগ করুন</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveAdminTab('ad_calculator')}
+                  className="text-[11px] font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200 flex items-center gap-1 cursor-pointer transition"
+                  title="বিজ্ঞাপনের রেট হিসাব করতে ক্যালকুলেটরে যান"
+                >
+                  <Calculator className="w-3.5 h-3.5" />
+                  <span>রেট ক্যালকুলেটর</span>
+                </button>
               </div>
 
               <form onSubmit={handleCreateAdBanner} className="space-y-3 text-xs">
@@ -652,6 +735,13 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Interactive Ad Pricing Calculator Subview */}
+      {activeAdminTab === 'ad_calculator' && (
+        <div className="space-y-6 animate-fade-in">
+          <AdPricingCalculator onApplyToBanner={handleApplyFromCalculator} />
         </div>
       )}
 
@@ -907,6 +997,25 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
               </div>
             </div>
 
+            <div>
+              <label className="block font-bold text-slate-700 mb-1 flex items-center justify-between">
+                <span>অফিসিয়াল লাইভ ওয়েবসাইট ইউআরএল (Firebase Production URL)</span>
+                <span className="text-xs text-emerald-600 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md">
+                  লাইভ লিঙ্ক
+                </span>
+              </label>
+              <input
+                type="url"
+                value={productionUrl}
+                onChange={(e) => setProductionUrl(e.target.value)}
+                placeholder="https://ourjamalpur15117.web.app"
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-purple-500 focus:bg-white font-mono text-xs"
+              />
+              <p className="text-[11px] text-slate-500 mt-1">
+                সর্বশেষ আপডেট সংস্করণ লিংক ও সোশ্যালে শেয়ারিংয়ের জন্য এই লিংকটি ব্যবহৃত হয়।
+              </p>
+            </div>
+
             <div className="pt-2 flex items-center justify-between">
               <button
                 type="button"
@@ -1112,12 +1221,12 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
                   <input
                     type="text"
                     readOnly
-                    value="https://our-jamalpur.web.app"
+                    value={settings.productionUrl || 'https://ourjamalpur15117.web.app'}
                     className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200"
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText('https://our-jamalpur.web.app');
+                      navigator.clipboard.writeText(settings.productionUrl || 'https://ourjamalpur15117.web.app');
                       setCopiedLinkType('firebase');
                       setTimeout(() => setCopiedLinkType(null), 2500);
                     }}
@@ -1153,12 +1262,12 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
                   <input
                     type="text"
                     readOnly
-                    value="https://our-jamalpur.web.app?v=latest&update=true"
+                    value={`${settings.productionUrl || 'https://ourjamalpur15117.web.app'}?v=latest&update=true`}
                     className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200"
                   />
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText('https://our-jamalpur.web.app?v=latest&update=true');
+                      navigator.clipboard.writeText(`${settings.productionUrl || 'https://ourjamalpur15117.web.app'}?v=latest&update=true`);
                       setCopiedLinkType('bypass');
                       setTimeout(() => setCopiedLinkType(null), 2500);
                     }}
@@ -1182,28 +1291,29 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
                 </p>
               </div>
 
-              {/* Link 3: Current Preview Origin */}
+              {/* Link 3: Official Live Production Portal Link */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <Smartphone className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
-                    <span>৩. বর্তমান ব্রাউজার লাইভ ইউআরএল</span>
+                    <Globe className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                    <span>৩. সর্বশেষ অফিশিয়াল লাইভ ওয়েবসাইট লিংক</span>
+                  </span>
+                  <span className="text-[10px] text-purple-600 dark:text-purple-400 font-extrabold bg-purple-50 dark:bg-purple-950/70 px-2 py-0.5 rounded-md">
+                    সার্বজনীন লিংক
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     readOnly
-                    value={typeof window !== 'undefined' ? window.location.origin : ''}
+                    value={settings.productionUrl || 'https://ourjamalpur15117.web.app'}
                     className="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-slate-200"
                   />
                   <button
                     onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        navigator.clipboard.writeText(window.location.origin);
-                        setCopiedLinkType('current');
-                        setTimeout(() => setCopiedLinkType(null), 2500);
-                      }
+                      navigator.clipboard.writeText(settings.productionUrl || 'https://ourjamalpur15117.web.app');
+                      setCopiedLinkType('current');
+                      setTimeout(() => setCopiedLinkType(null), 2500);
                     }}
                     className="px-3 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition flex items-center gap-1 cursor-pointer shrink-0"
                   >
@@ -1219,6 +1329,15 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
                       </>
                     )}
                   </button>
+                  <a
+                    href={settings.productionUrl || 'https://ourjamalpur15117.web.app'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs transition"
+                    title="ব্রাউজারে ওপেন করুন"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
                 </div>
               </div>
 
@@ -1229,7 +1348,7 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
                 </span>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <a
-                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent('Our Jamalpur (আমাদের জামালপুর) ডিজিটাল সেবা পোর্টাল: https://our-jamalpur.web.app')}`}
+                    href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Our Jamalpur (আমাদের জামালপুর) ডিজিটাল সেবা পোর্টাল: ${settings.productionUrl || 'https://ourjamalpur15117.web.app'}`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="py-2.5 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-800 dark:text-emerald-300 font-extrabold flex items-center justify-center gap-1.5 transition text-center border border-emerald-200 dark:border-emerald-800"
@@ -1237,7 +1356,7 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
                     <span>💬 WhatsApp</span>
                   </a>
                   <a
-                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://our-jamalpur.web.app')}`}
+                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(settings.productionUrl || 'https://ourjamalpur15117.web.app')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-blue-800 dark:text-blue-300 font-extrabold flex items-center justify-center gap-1.5 transition text-center border border-blue-200 dark:border-blue-800"
@@ -1245,7 +1364,7 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
                     <span>🔵 Facebook</span>
                   </a>
                   <a
-                    href={`https://t.me/share/url?url=${encodeURIComponent('https://our-jamalpur.web.app')}&text=${encodeURIComponent('Our Jamalpur ডিজিটাল প্ল্যাটফর্ম')}`}
+                    href={`https://t.me/share/url?url=${encodeURIComponent(settings.productionUrl || 'https://ourjamalpur15117.web.app')}&text=${encodeURIComponent('Our Jamalpur ডিজিটাল প্ল্যাটফর্ম')}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="py-2.5 px-3 rounded-xl bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 text-sky-800 dark:text-sky-300 font-extrabold flex items-center justify-center gap-1.5 transition text-center border border-sky-200 dark:border-sky-800"

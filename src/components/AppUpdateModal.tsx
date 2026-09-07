@@ -15,6 +15,9 @@ import {
   Layers,
   ArrowRight,
   Wifi,
+  Globe,
+  Copy,
+  ExternalLink,
 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 
@@ -30,6 +33,7 @@ export const AppUpdateModal: React.FC<Props> = ({ isOpen, onClose, onOpenShareAp
   const [updateSuccess, setUpdateSuccess] = useState(false);
   const [stats, setStats] = useState<any>(null);
   const [versionInfo, setVersionInfo] = useState<any>(null);
+  const [copiedOfficialUrl, setCopiedOfficialUrl] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -176,6 +180,58 @@ export const AppUpdateModal: React.FC<Props> = ({ isOpen, onClose, onOpenShareAp
                   <span>লাইভ ক্লাউড</span>
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* Official Live Web URL Card */}
+          <div className="bg-slate-50 dark:bg-slate-800/60 border border-emerald-200 dark:border-emerald-800/70 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
+                  সর্বশেষ অফিসিয়াল লাইভ ওয়েবসাইট লিংক:
+                </span>
+                <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                  {versionInfo?.officialUrl || 'https://ourjamalpur15117.web.app'}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 self-end sm:self-auto shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  const targetUrl = versionInfo?.officialUrl || 'https://ourjamalpur15117.web.app';
+                  navigator.clipboard.writeText(targetUrl);
+                  setCopiedOfficialUrl(true);
+                  setTimeout(() => setCopiedOfficialUrl(false), 2500);
+                }}
+                className={`px-2.5 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 cursor-pointer transition ${
+                  copiedOfficialUrl
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300'
+                }`}
+              >
+                {copiedOfficialUrl ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>কপি হয়েছে!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>কপি লিংক</span>
+                  </>
+                )}
+              </button>
+              <a
+                href={versionInfo?.officialUrl || 'https://ourjamalpur15117.web.app'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center gap-1 transition"
+              >
+                <ExternalLink className="w-3 h-3" />
+                <span>ভিজিট</span>
+              </a>
             </div>
           </div>
 

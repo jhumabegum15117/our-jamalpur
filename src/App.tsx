@@ -15,6 +15,7 @@ import { InstallAppModal } from './components/InstallAppModal';
 import { StorageCacheModal } from './components/StorageCacheModal';
 import { AppUpdateModal } from './components/AppUpdateModal';
 import { ShareAppModal } from './components/ShareAppModal';
+import { FloatingUpdateButton } from './components/FloatingUpdateButton';
 import { ThemeToggle } from './components/ThemeToggle';
 
 // Views
@@ -171,6 +172,7 @@ export function App() {
         onOpenExportZip={() => setIsExportZipOpen(true)}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
         onOpenStorageCache={() => setIsStorageModalOpen(true)}
+        onOpenAppUpdate={() => setIsUpdateModalOpen(true)}
       />
 
       {/* 2. Emergency Hotlines Bar */}
@@ -204,6 +206,7 @@ export function App() {
         onOpenExportZip={() => setIsExportZipOpen(true)}
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
         onOpenStorageCache={() => setIsStorageModalOpen(true)}
+        onOpenAppUpdate={() => setIsUpdateModalOpen(true)}
         selectedUpazila={selectedUpazila}
         onOpenUpazilaModal={() => setIsUpazilaModalOpen(true)}
         currentUser={currentUser}
@@ -456,10 +459,20 @@ export function App() {
               <button onClick={() => handleNavigate('admin')} className="text-purple-400 hover:text-purple-300 font-bold">
                 অ্যাডমিন পোর্টাল
               </button>
+              <button
+                onClick={() => setIsUpdateModalOpen(true)}
+                className="text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer transition"
+              >
+                <RefreshCw className="w-3 h-3" />
+                <span>নতুন ফিচার আনুন</span>
+              </button>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Floating 1-Click Update & Feature Sync Button (Accessible Anywhere) */}
+      <FloatingUpdateButton onOpenUpdateModal={() => setIsUpdateModalOpen(true)} />
 
       {/* 7. Mobile Bottom Sticky Navigation */}
       <BottomNav activeTab={activeTab} onNavigate={handleNavigate} />

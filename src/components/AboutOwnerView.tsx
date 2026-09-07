@@ -96,7 +96,7 @@ export const AboutOwnerView: React.FC = () => {
                   “জামালপুর জেলার প্রতিটি নাগরিকের জীবনকে সহজ, নিরাপদ ও তথ্যনির্ভর করে তোলাই আমাদের মূল লক্ষ্য। লোকাল কেনাবেচা থেকে শুরু করে জরুরি রক্তদাতা, ডাক্তার, পরিবহন শিডিউল ও স্থানীয় সংবাদ—সবকিছুই জেলাবাসীর জন্য সম্পূর্ণ বিনামূল্যে উন্মুক্ত।”
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
                   <a
                     href="tel:01315481879"
                     className="flex items-center gap-1.5 font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200/80 transition"
@@ -111,6 +111,16 @@ export const AboutOwnerView: React.FC = () => {
                   >
                     <Mail className="w-3.5 h-3.5 text-slate-400" />
                     <span>masudrana15117@gmail.com</span>
+                  </a>
+
+                  <a
+                    href={storageService.getOfficialLiveUrl()}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 font-bold text-teal-700 hover:text-teal-900 bg-teal-50 px-3 py-1.5 rounded-xl border border-teal-200 transition"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-teal-600" />
+                    <span>ourjamalpur15117.web.app</span>
                   </a>
                 </div>
 
