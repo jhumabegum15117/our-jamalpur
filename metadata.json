@@ -1,0 +1,6 @@
+{
+  "name": "Our Jamalpur",
+  "description": "জামালপুর জেলার সব খবর, মার্কেটপ্লেস, পরিবহন, হাসপাতাল, ডাক্তার, রক্তদাতা, চাকরি ও জরুরি সেবার ডিজিটাল প্ল্যাটফর্ম।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

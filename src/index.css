@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    color-scheme: light;
+    transition: color-scheme 0.2s ease;
+  }
+  
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Continuous Live Marquee Animations - Ultra Slow, Gentle & Comfortable Reading Speed */
+@keyframes continuous-marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-smooth {
+  display: flex;
+  width: max-content;
+  animation: continuous-marquee 320s linear infinite;
+}
+
+.animate-marquee-normal {
+  display: flex;
+  width: max-content;
+  animation: continuous-marquee 450s linear infinite;
+}
+
+.animate-marquee-slow {
+  display: flex;
+  width: max-content;
+  animation: continuous-marquee 650s linear infinite;
+}
+
+.animate-marquee-fast {
+  display: flex;
+  width: max-content;
+  animation: continuous-marquee 250s linear infinite;
+}
+
+.animate-marquee-smooth:hover,
+.animate-marquee-normal:hover,
+.animate-marquee-slow:hover,
+.animate-marquee-fast:hover {
+  animation-play-state: paused;
+}
+
+/* Custom scrollbar for clean mobile & desktop experience */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark mode scrollbars */
+.dark ::-webkit-scrollbar-track {
+  background: #0b1120;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Smooth transition for theme switches */
+.theme-transition {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, fill 0.2s ease, stroke 0.2s ease;
+}
+
