@@ -26,12 +26,14 @@ interface Props {
   selectedProduct?: ProductItem | null;
   onSelectProduct?: (p: ProductItem | null) => void;
   onOpenAuth: () => void;
+  initialOpenPostAd?: boolean;
 }
 
 export const MarketplaceView: React.FC<Props> = ({
   currentUser,
   selectedProduct: initialSelected,
   onOpenAuth,
+  initialOpenPostAd = false,
 }) => {
   const [products, setProducts] = useState<ProductItem[]>(storageService.getProducts());
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -41,7 +43,14 @@ export const MarketplaceView: React.FC<Props> = ({
   const [sortBy, setSortBy] = useState<'newest' | 'price-asc' | 'price-desc'>('newest');
 
   const [activeModalProduct, setActiveModalProduct] = useState<ProductItem | null>(initialSelected || null);
-  const [isPostAdModalOpen, setIsPostAdModalOpen] = useState(false);
+  const [isPostAdModalOpen, setIsPostAdModalOpen] = useState(initialOpenPostAd);
+
+  // Synchronize when parent requests opening ad modal
+  React.useEffect(() => {
+    if (initialOpenPostAd) {
+      setIsPostAdModalOpen(true);
+    }
+  }, [initialOpenPostAd]);
   const [boostModalOpen, setBoostModalOpen] = useState(false);
   const [boostTargetProduct, setBoostTargetProduct] = useState<ProductItem | null>(null);
 

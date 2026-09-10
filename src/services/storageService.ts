@@ -199,7 +199,7 @@ function setItem<T>(key: string, value: T): void {
 }
 
 export const initialOwnerUser: User = {
-  id: 'usr-owner-1',
+  id: 'OJ-15117',
   name: 'মাসুদ রানা',
   phone: '01315481879',
   email: 'masudrana15117@gmail.com',
@@ -461,7 +461,20 @@ export const storageService = {
     storageService.setBusinesses(list);
   },
 
-  getCurrentUser: (): User | null => getItem<User | null>(KEYS.USER, null),
+  getCurrentUser: (): User | null => {
+    const user = getItem<User | null>(KEYS.USER, null);
+    if (!user) return null;
+    // Auto-normalize Admin / Owner UID to clean memorable format
+    const cleanPhone = (user.phone || '').replace(/\D/g, '');
+    if (user.role === 'admin' || cleanPhone === '01315481879' || user.id?.startsWith('usr-owner')) {
+      if (user.id !== 'OJ-15117' || user.role !== 'admin') {
+        user.id = 'OJ-15117';
+        user.role = 'admin';
+        storageService.setCurrentUser(user);
+      }
+    }
+    return user;
+  },
   setCurrentUser: (u: User | null) => setItem(KEYS.USER, u),
   logout: () => {
     storageService.setCurrentUser(null);
@@ -502,7 +515,7 @@ export const storageService = {
     return newUser;
   },
 
-  getUsersList: (): User[] => getItem(KEYS.USERS_LIST, [initialOwnerUser]),
+  getUsersList: (): User[] => getItem<User[]>(KEYS.USERS_LIST, []),
   setUsersList: (users: User[]) => setItem(KEYS.USERS_LIST, users),
   getUsers: (): User[] => storageService.getUsersList(),
   updateCurrentUser: (updatedData: Partial<User>): User | null => {

@@ -17,7 +17,6 @@ import { StorageCacheModal } from './components/StorageCacheModal';
 import { AppUpdateModal } from './components/AppUpdateModal';
 import { ShareAppModal } from './components/ShareAppModal';
 import { AuthModal } from './components/AuthModal';
-import { FloatingUpdateButton } from './components/FloatingUpdateButton';
 import { ThemeToggle } from './components/ThemeToggle';
 
 // Views
@@ -42,6 +41,7 @@ import { MfsTransferView } from './components/MfsTransferView';
 import { WeatherView } from './components/WeatherView';
 import { HelplinesView } from './components/HelplinesView';
 import { UpazilaHubModal } from './components/UpazilaHubModal';
+import { QuickActionModal } from './components/QuickActionModal';
 import jamalpurLogo from './assets/images/jamalpur_emblem_logo_1788191831752.jpg';
 
 export function App() {
@@ -55,6 +55,7 @@ export function App() {
   const [isUpazilaModalOpen, setIsUpazilaModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isQuickActionOpen, setIsQuickActionOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authModalAdminNotice, setAuthModalAdminNotice] = useState(false);
   const [hasUpdateWaiting, setHasUpdateWaiting] = useState(false);
@@ -130,6 +131,10 @@ export function App() {
   }, []);
 
   const handleNavigate = (tab: TabType, extra?: any) => {
+    if (tab === 'sell') {
+      setIsQuickActionOpen(true);
+      return;
+    }
     setActiveTab(tab);
     if (extra !== undefined) {
       setSelectedExtraItem(extra);
@@ -254,7 +259,8 @@ export function App() {
         {(activeTab === 'marketplace' || activeTab === 'sell') && (
           <MarketplaceView
             currentUser={currentUser}
-            selectedProduct={selectedExtraItem}
+            selectedProduct={selectedExtraItem?.openPostAd ? null : selectedExtraItem}
+            initialOpenPostAd={selectedExtraItem?.openPostAd === true || activeTab === 'sell'}
             onSelectProduct={(p) => setSelectedExtraItem(p)}
             onOpenAuth={() => {
               setAuthModalAdminNotice(false);
@@ -507,9 +513,6 @@ export function App() {
         </div>
       </footer>
 
-      {/* Floating 1-Click Update & Feature Sync Button (Accessible Anywhere) */}
-      <FloatingUpdateButton onOpenUpdateModal={() => setIsUpdateModalOpen(true)} />
-
       {/* 7. Mobile Bottom Sticky Navigation */}
       <BottomNav activeTab={activeTab} onNavigate={handleNavigate} />
 
@@ -580,6 +583,13 @@ export function App() {
           setAuthModalAdminNotice(false);
         }}
         adminNotice={authModalAdminNotice}
+      />
+
+      {/* 16. Quick Action Modal (Triggered by BottomNav Green + Button) */}
+      <QuickActionModal
+        isOpen={isQuickActionOpen}
+        onClose={() => setIsQuickActionOpen(false)}
+        onSelectAction={(tab, extra) => handleNavigate(tab, extra)}
       />
     </div>
   );

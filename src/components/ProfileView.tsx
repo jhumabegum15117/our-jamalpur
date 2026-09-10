@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   LogIn,
@@ -23,6 +23,13 @@ import {
   Database,
   Wifi,
   WifiOff,
+  Eye,
+  EyeOff,
+  Smartphone,
+  Send,
+  ArrowLeft,
+  AlertCircle,
+  Loader2,
 } from 'lucide-react';
 import { User as UserType, TabType, Upazila } from '../types';
 import { storageService } from '../services/storageService';
@@ -38,10 +45,19 @@ interface Props {
 }
 
 export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, onNavigate }) => {
+  const [authMethod, setAuthMethod] = useState<'phone' | 'email'>('phone');
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  
+  // Phone OTP States
+  const [otpStep, setOtpStep] = useState<'input' | 'verify'>('input');
+  const [sentOtp, setSentOtp] = useState<string | null>(null);
+  const [otpInput, setOtpInput] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [upazila, setUpazila] = useState<Upazila>('জামালপুর সদর');
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
@@ -50,9 +66,97 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // Timer cooldown
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendCooldown]);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleSendPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    const cleanPhone = phone.trim().replace(/\s+/g, '').replace(/^(\+88)/, '');
+    if (!/^01[3-9]\d{8}$/.test(cleanPhone)) {
+      setAuthError('সঠিক ১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর লিখুন (যেমন: 017XXXXXXXX)');
+      return;
+    }
+
+    if (authMode === 'register' && !name.trim()) {
+      setAuthError('দয়া করে আপনার পূর্ণ নাম লিখুন।');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await authService.sendOtp(cleanPhone, 'phone');
+      setSentOtp(res.otp);
+      setOtpStep('verify');
+      setResendCooldown(60);
+      showToast('মোবাইলে ৬-সংখ্যার ওটিপি পাঠানো হয়েছে!');
+    } catch (err: any) {
+      setAuthError(err?.message || 'ওটিপি পাঠাতে সমস্যা হয়েছে');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+
+    if (otpInput.trim().length !== 6) {
+      setAuthError('দয়া করে সঠিক ৬-সংখ্যার ওটিপি লিখুন');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const cleanPhone = phone.trim().replace(/\s+/g, '').replace(/^(\+88)/, '');
+      const result = await authService.loginOrRegisterWithPhone({
+        phone: cleanPhone,
+        otp: otpInput.trim(),
+        name: name.trim() || 'নাগরিক ব্যবহারকারী',
+        upazila,
+        email: email.trim(),
+      });
+
+      onLogin(result.user);
+      showToast(
+        result.isNew
+          ? `অভিনন্দন ${result.user.name}! নাগরিক অ্যাকাউন্ট তৈরি সফল হয়েছে।`
+          : `স্বাগতম, ${result.user.name}! সফলভাবে প্রবেশ করেছেন।`
+      );
+    } catch (err: any) {
+      setAuthError(err?.message || 'ভুল ওটিপি কোড');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendPhoneOtp = async () => {
+    if (resendCooldown > 0) return;
+    setAuthError(null);
+    setLoading(true);
+    try {
+      const cleanPhone = phone.trim().replace(/\s+/g, '').replace(/^(\+88)/, '');
+      const res = await authService.sendOtp(cleanPhone, 'phone');
+      setSentOtp(res.otp);
+      setResendCooldown(60);
+      showToast('নতুন ওটিপি কোড পাঠানো হয়েছে!');
+    } catch (err: any) {
+      setAuthError(err?.message || 'পুনরায় পাঠাতে ব্যর্থ হয়েছে');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAuth = async (e: React.FormEvent) => {
@@ -236,22 +340,29 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
 
                 <div className="mt-2 text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
                   <span>যোগদানের তারিখ: {currentUser.joinedDate || '২০২৬'}</span>
-                  {currentUser.id && (
-                    <span className="inline-flex items-center gap-1 font-mono text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
-                      <span>UID: {currentUser.id.substring(0, 12)}...</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(currentUser.id);
-                          showToast('UID কপি করা হয়েছে!');
-                        }}
-                        className="text-emerald-600 hover:text-emerald-700 font-bold ml-1 cursor-pointer"
-                        title="সম্পূর্ণ UID কপি করুন"
-                      >
-                        কপি
-                      </button>
-                    </span>
-                  )}
+                  {currentUser.id && (() => {
+                    const displayUid = (currentUser.role === 'admin' || (currentUser.phone || '').replace(/\D/g, '') === '01315481879' || currentUser.id.startsWith('usr-owner') || currentUser.id === 'OJ-15117')
+                      ? 'OJ-15117'
+                      : (currentUser.id.startsWith('usr-')
+                          ? `OJ-${currentUser.id.replace(/\D/g, '').slice(-5) || '1024'}`
+                          : currentUser.id);
+                    return (
+                      <span className="inline-flex items-center gap-1.5 font-mono text-xs bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 px-2.5 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-800 font-bold shadow-2xs">
+                        <span>UID: {displayUid}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(displayUid);
+                            showToast(`UID (${displayUid}) কপি করা হয়েছে!`);
+                          }}
+                          className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-extrabold ml-1 cursor-pointer underline"
+                          title="UID কপি করুন"
+                        >
+                          কপি
+                        </button>
+                      </span>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -461,10 +572,51 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
   return (
     <div className="max-w-md mx-auto py-8 animate-fade-in">
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-5">
+        
+        {/* Auth Method Selector */}
+        <div className="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl">
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMethod('phone');
+              setOtpStep('input');
+              setAuthError(null);
+            }}
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold text-xs transition cursor-pointer ${
+              authMethod === 'phone'
+                ? 'bg-white text-emerald-800 shadow-xs border border-emerald-500/20'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Smartphone className="w-4 h-4" />
+            <span>মোবাইল ওটিপি (OTP)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMethod('email');
+              setAuthError(null);
+            }}
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-bold text-xs transition cursor-pointer ${
+              authMethod === 'email'
+                ? 'bg-white text-emerald-800 shadow-xs border border-emerald-500/20'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Mail className="w-4 h-4" />
+            <span>ইমেইল ও পাসওয়ার্ড</span>
+          </button>
+        </div>
+
         {/* Toggle Login / Register */}
         <div className="flex bg-slate-100 p-1 rounded-2xl">
           <button
-            onClick={() => setAuthMode('login')}
+            type="button"
+            onClick={() => {
+              setAuthMode('login');
+              setOtpStep('input');
+              setAuthError(null);
+            }}
             className={`flex-1 py-2 rounded-xl font-bold text-xs transition cursor-pointer ${
               authMode === 'login' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -472,7 +624,12 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
             লগইন (Sign In)
           </button>
           <button
-            onClick={() => setAuthMode('register')}
+            type="button"
+            onClick={() => {
+              setAuthMode('register');
+              setOtpStep('input');
+              setAuthError(null);
+            }}
             className={`flex-1 py-2 rounded-xl font-bold text-xs transition cursor-pointer ${
               authMode === 'register' ? 'bg-white text-emerald-800 shadow-xs' : 'text-slate-600 hover:text-slate-900'
             }`}
@@ -486,113 +643,328 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
             {authMode === 'login' ? 'Our Jamalpur এ লগইন করুন' : 'নতুন নাগরিক অ্যাকাউন্ট তৈরি'}
           </h2>
           <p className="text-xs text-slate-500 mt-1">
-            বিজ্ঞাপন দেওয়া, কুইজ স্কোর সেভ করা ও সেবা গ্রহণ করতে সাইন ইন করুন
+            {authMethod === 'phone'
+              ? 'মোবাইল নম্বরে ৬-সংখ্যার ওটিপি যাচাই করে সহজে প্রবেশ করুন'
+              : 'বিজ্ঞাপন দেওয়া, কুইজ স্কোর সেভ করা ও সেবা গ্রহণ করতে সাইন ইন করুন'}
           </p>
         </div>
 
         {authError && (
-          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
-            {authError}
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <span>{authError}</span>
           </div>
         )}
 
-        <form onSubmit={handleAuth} className="space-y-3.5 text-xs sm:text-sm">
-          {authMode === 'register' && (
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">আপনার পূর্ণ নাম *</label>
-              <input
-                type="text"
-                required
-                placeholder="যেমন: তানভীর আহমেদ"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white"
-              />
-            </div>
-          )}
-
+        {/* ======================================================== */}
+        {/* PHONE & OTP FLOW                                         */}
+        {/* ======================================================== */}
+        {authMethod === 'phone' ? (
           <div>
-            <label className="block font-bold text-slate-700 mb-1">ইমেইল এড্রেস *</label>
-            <input
-              type="email"
-              required
-              placeholder="example@mail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white"
-            />
-          </div>
+            {otpStep === 'input' ? (
+              <form onSubmit={handleSendPhoneOtp} className="space-y-3.5 text-xs sm:text-sm">
+                {authMode === 'register' && (
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">আপনার পূর্ণ নাম *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="যেমন: তানভীর আহমেদ"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs sm:text-sm"
+                    />
+                  </div>
+                )}
 
-          <div>
-            <label className="block font-bold text-slate-700 mb-1">পাসওয়ার্ড *</label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              placeholder="পাসওয়ার্ড দিন (কমপক্ষে ৬ অক্ষর)"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white"
-            />
-          </div>
-
-          {authMode === 'register' && (
-            <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">উপজেলা</label>
-                  <select
-                    value={upazila}
-                    onChange={(e) => setUpazila(e.target.value as Upazila)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs"
-                  >
-                    {[
-                      'জামালপুর সদর',
-                      'মেলান্দহ',
-                      'মাদারগঞ্জ',
-                      'ইসলামপুর',
-                      'সরিষাবাড়ী',
-                      'দেওয়ানগঞ্জ',
-                      'বকশীগঞ্জ',
-                    ].map((up) => (
-                      <option key={up} value={up}>
-                        {up}
-                      </option>
-                    ))}
-                  </select>
+                  <label className="block font-bold text-slate-700 mb-1">
+                    মোবাইল নম্বর (১১ ডিজিট) *
+                  </label>
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3 flex items-center gap-1 pointer-events-none text-slate-500 text-xs font-semibold">
+                      <Phone className="w-3.5 h-3.5" />
+                      <span>+৮৮</span>
+                    </div>
+                    <input
+                      type="tel"
+                      required
+                      maxLength={11}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="01XXXXXXXXX"
+                      className="w-full pl-16 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs sm:text-sm font-mono tracking-wider"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    এই নম্বরে এসএমএসে ৬-সংখ্যার ওটিপি কোড পাঠানো হবে।
+                  </p>
                 </div>
+
+                {authMode === 'register' && (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block font-bold text-slate-700 mb-1">উপজেলা *</label>
+                        <select
+                          value={upazila}
+                          onChange={(e) => setUpazila(e.target.value as Upazila)}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs"
+                        >
+                          {[
+                            'জামালপুর সদর',
+                            'মেলান্দহ',
+                            'মাদারগঞ্জ',
+                            'ইসলামপুর',
+                            'সরিষাবাড়ী',
+                            'দেওয়ানগঞ্জ',
+                            'বকশীগঞ্জ',
+                          ].map((up) => (
+                            <option key={up} value={up}>
+                              {up}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block font-bold text-slate-700 mb-1">ইমেইল (ঐচ্ছিক)</label>
+                        <input
+                          type="email"
+                          placeholder="example@mail.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm mt-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>ওটিপি কোড পাঠানো হচ্ছে...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>ওটিপি কোড পাঠান (Send OTP)</span>
+                    </>
+                  )}
+                </button>
+              </form>
+            ) : (
+              /* Verify OTP Screen */
+              <form onSubmit={handleVerifyPhoneOtp} className="space-y-4 text-xs sm:text-sm">
+                <div className="flex items-center justify-between pb-1 border-b border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setOtpStep('input')}
+                    className="text-xs font-bold text-slate-500 hover:text-emerald-600 flex items-center gap-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>নম্বর পরিবর্তন ({phone})</span>
+                  </button>
+                  <span className="text-xs font-bold text-emerald-600">ধাপ ২/২</span>
+                </div>
+
+                {sentOtp && (
+                  <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-2xl flex items-center justify-between shadow-xs">
+                    <div>
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-emerald-800">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>আপনার ওটিপি কোড:</span>
+                      </div>
+                      <div className="text-xl font-black font-mono tracking-widest text-emerald-950 mt-0.5">
+                        {sentOtp}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOtpInput(sentOtp)}
+                      className="px-2.5 py-1.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition shadow-xs cursor-pointer active:scale-95"
+                    >
+                      স্বয়ংক্রিয় বসান
+                    </button>
+                  </div>
+                )}
+
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">মোবাইল নম্বর (ঐচ্ছিক)</label>
+                  <label className="block font-bold text-slate-700 mb-1 text-center">
+                    মোবাইলে প্রাপ্ত ৬-সংখ্যার ওটিপি লিখুন
+                  </label>
                   <input
-                    type="tel"
-                    placeholder="01XXXXXXXXX"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white"
+                    type="text"
+                    required
+                    maxLength={6}
+                    autoFocus
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value.replace(/[^0-9]/g, ''))}
+                    placeholder="• • • • • •"
+                    className="w-full text-center text-xl font-bold font-mono tracking-[0.4em] py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-emerald-500 shadow-inner"
                   />
                 </div>
-              </div>
 
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 leading-relaxed">
-                🛡️ <strong>নিরাপত্তা নীতি:</strong> সাইনআপের মাধ্যমে প্রতিটি একাউন্ট ডিফল্টভাবে সাধারণ "user" রোল পাবে। এডমিন রোল সার্ভার-সাইড সিকিউরিটি রুলস দ্বারা সুরক্ষিত।
-              </div>
-            </>
-          )}
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                  <span>কোড পাননি?</span>
+                  {resendCooldown > 0 ? (
+                    <span className="font-semibold text-slate-400">
+                      পুনরায় পাঠাতে: {resendCooldown} সে.
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendPhoneOtp}
+                      disabled={loading}
+                      className="text-emerald-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                      <span>পুনরায় পাঠান</span>
+                    </button>
+                  )}
+                </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <span>অপেক্ষা করুন...</span>
-            ) : authMode === 'login' ? (
-              'লগইন করুন'
-            ) : (
-              'নিবন্ধন সম্পন্ন করুন'
+                <button
+                  type="submit"
+                  disabled={loading || otpInput.trim().length !== 6}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>যাচাই করা হচ্ছে...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>
+                        {authMode === 'register'
+                          ? 'যাচাই ও অ্যাকাউন্ট তৈরি সম্পন্ন করুন'
+                          : 'ওটিপি যাচাই করে প্রবেশ করুন'}
+                      </span>
+                    </>
+                  )}
+                </button>
+              </form>
             )}
-          </button>
-        </form>
+          </div>
+        ) : (
+          /* ======================================================== */
+          /* EMAIL & PASSWORD FLOW                                    */
+          /* ======================================================== */
+          <form onSubmit={handleAuth} className="space-y-3.5 text-xs sm:text-sm">
+            {authMode === 'register' && (
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">আপনার পূর্ণ নাম *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="যেমন: তানভীর আহমেদ"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs sm:text-sm"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">ইমেইল এড্রেস *</label>
+              <input
+                type="email"
+                required
+                placeholder="example@mail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs sm:text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-slate-700 mb-1">পাসওয়ার্ড *</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  required
+                  minLength={6}
+                  placeholder="পাসওয়ার্ড দিন (কমপক্ষে ৬ অক্ষর)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-2.5 pr-10 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs sm:text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-400 hover:text-slate-600 transition cursor-pointer p-0.5"
+                  title={showPassword ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {authMode === 'register' && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">উপজেলা</label>
+                    <select
+                      value={upazila}
+                      onChange={(e) => setUpazila(e.target.value as Upazila)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs"
+                    >
+                      {[
+                        'জামালপুর সদর',
+                        'মেলান্দহ',
+                        'মাদারগঞ্জ',
+                        'ইসলামপুর',
+                        'সরিষাবাড়ী',
+                        'দেওয়ানগঞ্জ',
+                        'বকশীগঞ্জ',
+                      ].map((up) => (
+                        <option key={up} value={up}>
+                          {up}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-bold text-slate-700 mb-1">মোবাইল নম্বর (ঐচ্ছিক)</label>
+                    <input
+                      type="tel"
+                      placeholder="01XXXXXXXXX"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 leading-relaxed">
+                  🛡️ <strong>নিরাপত্তা নীতি:</strong> সাইনআপের মাধ্যমে প্রতিটি একাউন্ট ডিফল্টভাবে সাধারণ "user" রোল পাবে। এডমিন রোল সার্ভার-সাইড সিকিউরিটি রুলস দ্বারা সুরক্ষিত।
+                </div>
+              </>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2 text-xs sm:text-sm"
+            >
+              {loading ? (
+                <span>অপেক্ষা করুন...</span>
+              ) : authMode === 'login' ? (
+                'লগইন করুন'
+              ) : (
+                'নিবন্ধন সম্পন্ন করুন'
+              )}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

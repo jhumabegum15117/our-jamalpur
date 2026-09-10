@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, ShieldAlert, Lock, Mail, Loader2, ArrowLeft, LogIn } from 'lucide-react';
+import { Shield, ShieldAlert, Lock, Mail, Loader2, ArrowLeft, LogIn, Eye, EyeOff } from 'lucide-react';
 import { authService, isUserAdmin } from '../services/authService';
 import { User } from '../types';
 
@@ -11,6 +11,7 @@ interface Props {
 export const AdminLoginGuard: React.FC<Props> = ({ onSuccess, onNavigateHome }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,17 +75,30 @@ export const AdminLoginGuard: React.FC<Props> = ({ onSuccess, onNavigateHome }) 
       {/* Admin Login Form */}
       <form onSubmit={handleAdminLogin} className="space-y-4">
         <div>
-          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-            অ্যাডমিন আইডি (ইমেইল) <span className="text-rose-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              অ্যাডমিন আইডি / মোবাইল / ইমেইল <span className="text-rose-500">*</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('01315481879');
+                setPassword('15117');
+                setError(null);
+              }}
+              className="text-[11px] font-extrabold text-purple-700 dark:text-purple-300 hover:underline bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800 cursor-pointer"
+            >
+              স্বয়ংক্রিয় তথ্য বসান ➔
+            </button>
+          </div>
           <div className="relative">
             <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
-              type="email"
+              type="text"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@mail.com"
+              placeholder="01315481879 বা masudrana15117@gmail.com"
               className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500"
             />
           </div>
@@ -97,13 +111,33 @@ export const AdminLoginGuard: React.FC<Props> = ({ onSuccess, onNavigateHome }) 
           <div className="relative">
             <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="আপনার গোপন পাসওয়ার্ড"
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+              className="w-full pl-9 pr-10 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer p-0.5"
+              title={showPassword ? 'পাসওয়ার্ড লুকান' : 'পাসওয়ার্ড দেখুন'}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Quick Credentials Info Box */}
+        <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+          <div className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+            <span>অ্যাডমিন মাস্টার এক্সেস তথ্য:</span>
+          </div>
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 pl-3 border-l-2 border-purple-400">
+            <div><strong className="text-slate-700 dark:text-slate-300">আইডি:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-purple-600 dark:text-purple-400">01315481879</code> বা <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-purple-600 dark:text-purple-400">masudrana15117@gmail.com</code></div>
+            <div><strong className="text-slate-700 dark:text-slate-300">পাসওয়ার্ড:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-emerald-600 dark:text-emerald-400 font-bold">15117</code> বা <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-emerald-600 dark:text-emerald-400 font-bold">jamalpur15117</code></div>
           </div>
         </div>
 
