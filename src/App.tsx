@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Download, Smartphone, CheckCircle2, Share2, RefreshCw, Sparkles, X, WifiOff } from 'lucide-react';
 import { TabType, Upazila, User as UserType } from './types';
 import { storageService } from './services/storageService';
+import { authService, isUserAdmin } from './services/authService';
 
 // Subcomponents
 import { LiveClockHeader } from './components/LiveClockHeader';
@@ -15,6 +16,7 @@ import { InstallAppModal } from './components/InstallAppModal';
 import { StorageCacheModal } from './components/StorageCacheModal';
 import { AppUpdateModal } from './components/AppUpdateModal';
 import { ShareAppModal } from './components/ShareAppModal';
+import { AuthModal } from './components/AuthModal';
 import { FloatingUpdateButton } from './components/FloatingUpdateButton';
 import { ThemeToggle } from './components/ThemeToggle';
 
@@ -35,6 +37,7 @@ import { BusinessDirectoryView } from './components/BusinessDirectoryView';
 import { AboutOwnerView } from './components/AboutOwnerView';
 import { ProfileView } from './components/ProfileView';
 import { AdminPanelView } from './components/AdminPanelView';
+import { AdminLoginGuard } from './components/AdminLoginGuard';
 import { MfsTransferView } from './components/MfsTransferView';
 import { WeatherView } from './components/WeatherView';
 import { HelplinesView } from './components/HelplinesView';
@@ -52,6 +55,8 @@ export function App() {
   const [isUpazilaModalOpen, setIsUpazilaModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [authModalAdminNotice, setAuthModalAdminNotice] = useState(false);
   const [hasUpdateWaiting, setHasUpdateWaiting] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -60,6 +65,22 @@ export function App() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const settings = storageService.getSettings();
+
+  // Listen for Firebase Auth user session changes
+  useEffect(() => {
+    let initialAuthChecked = false;
+    const unsubscribe = authService.subscribeToAuthState((user) => {
+      setCurrentUser(user);
+      if (!initialAuthChecked) {
+        initialAuthChecked = true;
+        // On any device/mobile where no user is logged in, show user login option first!
+        if (!user) {
+          setIsAuthOpen(true);
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Listen for PWA service worker update notification
@@ -120,8 +141,8 @@ export function App() {
     setCurrentUser(user);
   };
 
-  const handleLogout = () => {
-    storageService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     setCurrentUser(null);
   };
 
@@ -210,7 +231,11 @@ export function App() {
         selectedUpazila={selectedUpazila}
         onOpenUpazilaModal={() => setIsUpazilaModalOpen(true)}
         currentUser={currentUser}
-        onOpenAuth={() => handleNavigate('profile')}
+        onOpenAuth={() => {
+          setAuthModalAdminNotice(false);
+          setIsAuthOpen(true);
+        }}
+        onLogout={handleLogout}
       />
 
       {/* 5. Main Content Route Container */}
@@ -231,7 +256,10 @@ export function App() {
             currentUser={currentUser}
             selectedProduct={selectedExtraItem}
             onSelectProduct={(p) => setSelectedExtraItem(p)}
-            onOpenAuth={() => handleNavigate('profile')}
+            onOpenAuth={() => {
+              setAuthModalAdminNotice(false);
+              setIsAuthOpen(true);
+            }}
           />
         )}
 
@@ -279,12 +307,20 @@ export function App() {
           />
         )}
 
+        {/* Admin Panel strictly restricted to Admin users with ID & Password */}
         {activeTab === 'admin' && (
-          <AdminPanelView
-            onRefresh={() => setRefreshKey((k) => k + 1)}
-            onOpenAppUpdate={() => setIsUpdateModalOpen(true)}
-            onOpenShareApp={() => setIsShareModalOpen(true)}
-          />
+          isUserAdmin(currentUser) ? (
+            <AdminPanelView
+              onRefresh={() => setRefreshKey((k) => k + 1)}
+              onOpenAppUpdate={() => setIsUpdateModalOpen(true)}
+              onOpenShareApp={() => setIsShareModalOpen(true)}
+            />
+          ) : (
+            <AdminLoginGuard
+              onSuccess={(adminUser) => handleLogin(adminUser)}
+              onNavigateHome={() => handleNavigate('home')}
+            />
+          )
         )}
       </main>
 
@@ -529,6 +565,21 @@ export function App() {
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         onOpenAppUpdate={() => setIsUpdateModalOpen(true)}
+      />
+
+      {/* 15. Firebase Auth Modal (Login / Sign Up) */}
+      <AuthModal
+        isOpen={isAuthOpen}
+        onClose={() => {
+          setIsAuthOpen(false);
+          setAuthModalAdminNotice(false);
+        }}
+        onSuccess={(user) => {
+          setCurrentUser(user);
+          setIsAuthOpen(false);
+          setAuthModalAdminNotice(false);
+        }}
+        adminNotice={authModalAdminNotice}
       />
     </div>
   );

@@ -1,0 +1,119 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document with role-based permissions",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase Auth User ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full display name of user"
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact telephone number"
+        },
+        "upazila": {
+          "type": "string",
+          "description": "Selected upazila of Jamalpur district"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "user"],
+          "description": "Authorization role"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of account creation"
+        }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Admin registry document granting administrative access",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Admin user email"
+        },
+        "assignedAt": {
+          "type": "string",
+          "description": "Assignment timestamp"
+        }
+      },
+      "required": ["email"]
+    },
+    "NewsItem": {
+      "title": "NewsItem",
+      "description": "District news articles managed by admin",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "summary": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "date": { "type": "string" },
+        "author": { "type": "string" }
+      },
+      "required": ["title", "content"]
+    },
+    "ProductItem": {
+      "title": "ProductItem",
+      "description": "Marketplace listing",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "price": { "type": "number" },
+        "category": { "type": "string" },
+        "sellerName": { "type": "string" },
+        "sellerPhone": { "type": "string" },
+        "userId": { "type": "string" }
+      },
+      "required": ["title", "price"]
+    },
+    "DoctorItem": {
+      "title": "DoctorItem",
+      "description": "Doctor directory listing",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "specialty": { "type": "string" },
+        "chamber": { "type": "string" },
+        "phone": { "type": "string" }
+      },
+      "required": ["name", "specialty"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile records"
+    },
+    "/admins/{adminId}": {
+      "schema": "Admin",
+      "description": "Administrative authority registry"
+    },
+    "/news/{newsId}": {
+      "schema": "NewsItem",
+      "description": "Published news articles"
+    },
+    "/products/{productId}": {
+      "schema": "ProductItem",
+      "description": "Marketplace trade items"
+    },
+    "/doctors/{doctorId}": {
+      "schema": "DoctorItem",
+      "description": "Verified medical practitioner profiles"
+    }
+  }
+}

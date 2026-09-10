@@ -32,10 +32,12 @@ import {
   Share2,
   RefreshCw,
   Sparkles,
+  LogOut,
 } from 'lucide-react';
 import { TabType, User as UserType, Upazila } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 import jamalpurLogo from '../assets/images/jamalpur_emblem_logo_1788191831752.jpg';
+import { isUserAdmin } from '../services/authService';
 
 interface Props {
   activeTab: TabType;
@@ -49,6 +51,7 @@ interface Props {
   onOpenUpazilaModal?: () => void;
   currentUser: UserType | null;
   onOpenAuth: () => void;
+  onLogout?: () => void;
 }
 
 export const Navbar: React.FC<Props> = ({
@@ -63,9 +66,11 @@ export const Navbar: React.FC<Props> = ({
   onOpenUpazilaModal,
   currentUser,
   onOpenAuth,
+  onLogout,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
+  const isAdmin = isUserAdmin(currentUser);
 
   const mainNavLinks: Array<{ id: TabType; label: string; icon: any }> = [
     { id: 'home', label: 'হোম', icon: null },
@@ -216,36 +221,55 @@ export const Navbar: React.FC<Props> = ({
               <ThemeToggle variant="dropdown" />
             </div>
 
-            {/* Admin Panel Quick Link */}
+            {/* Admin Panel Link */}
             <button
               id="admin-nav-btn"
               onClick={() => handleNavClick('admin')}
-              className="hidden md:flex items-center gap-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-2.5 py-2 rounded-xl border border-slate-300/80 dark:border-slate-700 transition cursor-pointer"
+              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl border transition cursor-pointer shadow-2xs ${
+                isAdmin
+                  ? 'bg-purple-600 text-white border-purple-700 hover:bg-purple-700'
+                  : 'bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/80 text-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700'
+              }`}
+              title={isAdmin ? "অ্যাডমিন ড্যাশবোর্ড" : "অ্যাডমিন প্যানেল প্রবেশ"}
             >
-              <Shield className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>অ্যাডমিন</span>
+              <Shield className={`w-3.5 h-3.5 ${isAdmin ? 'text-amber-300 stroke-[2.5]' : 'text-purple-600 dark:text-purple-400'}`} />
+              <span className="hidden sm:inline">{isAdmin ? 'অ্যাডমিন ড্যাশবোর্ড' : 'অ্যাডমিন'}</span>
+              <span className="sm:hidden">এডমিন</span>
             </button>
 
             {/* User Profile / Login */}
             {currentUser ? (
-              <button
-                id="user-profile-btn"
-                onClick={() => handleNavClick('profile')}
-                className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer"
-              >
-                <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">
-                  {currentUser.name.charAt(0)}
-                </div>
-                <span className="hidden sm:inline max-w-[90px] truncate">{currentUser.name}</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  id="user-profile-btn"
+                  onClick={() => handleNavClick('profile')}
+                  className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer"
+                  title="প্রোফাইল দেখুন"
+                >
+                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">
+                    {currentUser.name.charAt(0)}
+                  </div>
+                  <span className="hidden sm:inline max-w-[90px] truncate">{currentUser.name}</span>
+                </button>
+                {onLogout && (
+                  <button
+                    id="navbar-logout-btn"
+                    onClick={onLogout}
+                    className="p-2 text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl transition cursor-pointer"
+                    title="লগআউট করুন"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             ) : (
               <button
                 id="login-btn"
                 onClick={onOpenAuth}
-                className="flex items-center gap-1 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer"
+                className="flex items-center gap-1.5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black dark:from-slate-700 dark:to-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl transition cursor-pointer shadow-xs"
               >
-                <User className="w-3.5 h-3.5" />
-                <span>লগইন</span>
+                <User className="w-3.5 h-3.5 text-emerald-400" />
+                <span>লগইন / নিবন্ধন</span>
               </button>
             )}
 
@@ -505,13 +529,27 @@ export const Navbar: React.FC<Props> = ({
                 <span>📱 Our Jamalpur অ্যাপ ইনস্টল করুন</span>
               </button>
             )}
+            {/* Admin link */}
             <button
+              id="mobile-drawer-admin-btn"
               onClick={() => handleNavClick('admin')}
-              className="w-full py-2 px-3 rounded-lg bg-slate-900 dark:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 px-3 rounded-xl bg-purple-900 hover:bg-purple-800 text-white text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm"
             >
-              <Shield className="w-4 h-4 text-emerald-400" />
-              <span>অ্যাডমিন কন্ট্রোল প্যানেল</span>
+              <Shield className="w-4 h-4 text-purple-300" />
+              <span>{isAdmin ? 'অ্যাডমিন কন্ট্রোল প্যানেল' : 'অ্যাডমিন প্যানেল (লগইন / প্রবেশ)'}</span>
             </button>
+            {currentUser && onLogout && (
+              <button
+                onClick={() => {
+                  onLogout();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <LogOut className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                <span>লগআউট ({currentUser.name})</span>
+              </button>
+            )}
             <button
               onClick={() => {
                 onOpenExportZip();

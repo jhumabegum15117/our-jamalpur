@@ -461,7 +461,7 @@ export const storageService = {
     storageService.setBusinesses(list);
   },
 
-  getCurrentUser: (): User | null => getItem(KEYS.USER, initialOwnerUser),
+  getCurrentUser: (): User | null => getItem<User | null>(KEYS.USER, null),
   setCurrentUser: (u: User | null) => setItem(KEYS.USER, u),
   logout: () => {
     storageService.setCurrentUser(null);
@@ -472,11 +472,6 @@ export const storageService = {
     if (found) {
       storageService.setCurrentUser(found);
       return found;
-    }
-    // Owner login shortcut
-    if (phone === '01315481879') {
-      storageService.setCurrentUser(initialOwnerUser);
-      return initialOwnerUser;
     }
     const newUser: User = {
       id: `usr-${Date.now()}`,
@@ -1058,8 +1053,8 @@ export const storageService = {
     setItem(KEYS.PRAYER_TIMES, initialPrayerTimes);
     setItem(KEYS.MARKET_PRICES, initialMarketPrices);
     setItem(KEYS.BUSINESSES, initialBusinesses);
-    setItem(KEYS.USER, initialOwnerUser);
-    setItem(KEYS.USERS_LIST, [initialOwnerUser]);
+    setItem(KEYS.USER, null);
+    setItem(KEYS.USERS_LIST, []);
     setItem(KEYS.AD_BANNERS, initialAdBanners);
     setItem(KEYS.MONETIZATION_REQUESTS, initialMonetizationRequests);
     setItem(KEYS.CERTIFICATES, initialSundayCertificates);

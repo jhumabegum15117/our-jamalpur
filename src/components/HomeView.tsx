@@ -16,6 +16,7 @@ import {
   Building2,
   PhoneCall,
   ArrowRight,
+  Shield,
   ShieldCheck,
   MapPin,
   Sparkles,
@@ -39,6 +40,7 @@ import {
 import { TabType, Upazila } from '../types';
 import { storageService } from '../services/storageService';
 import { AdBanner } from './AdBanner';
+import { AdvertisementBanner } from './AdvertisementBanner';
 import { UpazilaBar } from './UpazilaBar';
 import jamalpurLogo from '../assets/images/jamalpur_emblem_logo_1788191831752.jpg';
 
@@ -242,6 +244,15 @@ export const HomeView: React.FC<Props> = ({
       color: 'text-slate-700',
       bg: 'bg-slate-50 hover:bg-slate-100 border-slate-200',
     },
+    {
+      id: 'admin',
+      title: 'অ্যাডমিন প্যানেল',
+      subtitle: 'ওয়েবসাইট পরিচালনা ও নিয়ন্ত্রণ',
+      icon: Shield,
+      color: 'text-purple-700',
+      bg: 'bg-purple-50 hover:bg-purple-100/90 border-purple-300',
+      badge: 'কন্ট্রোল',
+    },
   ];
 
   return (
@@ -303,6 +314,9 @@ export const HomeView: React.FC<Props> = ({
           onNavigate={onNavigate}
         />
       )}
+
+      {/* Local Business Promotional Carousel / Grid Advertisement Banner - Prominently at the top */}
+      <AdvertisementBanner onOpenMonetizeModal={() => onNavigate('contact')} />
 
 
 

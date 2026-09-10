@@ -38,6 +38,7 @@ import {
   Calculator,
 } from 'lucide-react';
 import { storageService, OWNER_PAYMENT_INFO } from '../services/storageService';
+import { isUserAdmin } from '../services/authService';
 import { NewsItem, ProductItem, SiteSettings, MonetizationRequest, AdBannerItem } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 import { AdminMonetizationChart } from './AdminMonetizationChart';
@@ -241,6 +242,21 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
     adBanners.reduce((acc, curr) => acc + (curr.amountPaid || 0), 0);
 
   const pendingCount = monetizationRequests.filter((r) => r.status === 'pending').length;
+
+  const currentStoredUser = storageService.getCurrentUser();
+  if (!isUserAdmin(currentStoredUser)) {
+    return (
+      <div className="max-w-md mx-auto my-12 p-8 bg-white dark:bg-slate-900 rounded-3xl border border-rose-200 dark:border-rose-900/60 shadow-xl text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 mx-auto flex items-center justify-center border border-rose-200 dark:border-rose-800">
+          <Shield className="w-8 h-8 stroke-[2.2]" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">অননুমোদিত প্রবেশ</h2>
+        <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+          আপনার এই প্যানেলে প্রবেশের অনুমতি নেই। শুধুমাত্র অনুমোদিত অ্যাডমিন আইডি ও পাসওয়ার্ড দিয়ে প্রবেশ করা যাবে।
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-12 animate-fade-in">

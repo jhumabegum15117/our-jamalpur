@@ -24,8 +24,9 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { User as UserType, TabType } from '../types';
+import { User as UserType, TabType, Upazila } from '../types';
 import { storageService } from '../services/storageService';
+import { authService, isUserAdmin } from '../services/authService';
 import masudRanaPhoto from '../assets/images/masud_rana_profile_1788024419763.jpg';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -42,54 +43,78 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
-  const [upazila, setUpazila] = useState('জামালপুর সদর');
+  const [upazila, setUpazila] = useState<Upazila>('জামালপুর সদর');
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
   const [photoUrlInput, setPhotoUrlInput] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || !password) {
-      alert('দয়া করে মোবাইল নম্বর ও পাসওয়ার্ড প্রদান করুন');
-      return;
-    }
+    setAuthError(null);
 
     if (authMode === 'login') {
-      const user = storageService.login(phone, password);
-      if (user) {
-        onLogin(user);
-        showToast(`স্বাগতম, ${user.name}! আপনি সফলভাবে লগইন করেছেন।`);
-      } else {
-        alert('মোবাইল নম্বর বা পাসওয়ার্ড সঠিক নয়।');
-      }
-    } else {
-      if (!name) {
-        alert('দয়া করে আপনার নাম লিখুন');
+      if (!email || !password) {
+        setAuthError('দয়া করে ইমেইল ও পাসওয়ার্ড প্রদান করুন');
         return;
       }
-      const newUser = storageService.register({
-        name,
-        phone,
-        email: email || `${phone}@ourjamalpur.com`,
-        password,
-        upazila,
-        role: 'user',
-      });
-      onLogin(newUser);
-      showToast(`অভিনন্দন, ${name}! আপনার অ্যাকাউন্ট তৈরি সম্পন্ন হয়েছে।`);
-    }
-  };
-
-  const handleAdminQuickLogin = () => {
-    const admin = storageService.login('01315481879', 'admin123');
-    if (admin) {
-      onLogin(admin);
-      showToast('মাসুদ রানা অ্যাডমিন অ্যাকাউন্টে সফলভাবে প্রবেশ করেছেন');
+      setLoading(true);
+      try {
+        const user = await authService.loginWithEmail(email, password);
+        onLogin(user);
+        showToast(`স্বাগতম, ${user.name}! আপনি সফলভাবে প্রবেশ করেছেন।`);
+      } catch (err: any) {
+        const code = err?.code || '';
+        if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+          setAuthError('ভুল ইমেইল বা পাসওয়ার্ড। অনুগ্রহ করে পুনরায় যাচাই করুন।');
+        } else if (code === 'auth/user-not-found') {
+          setAuthError('এই ইমেইলে কোনো একাউন্ট পাওয়া যায়নি। নতুন নিবন্ধন করুন।');
+        } else {
+          setAuthError(err?.message || 'লগইন ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।');
+        }
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      if (!name.trim()) {
+        setAuthError('দয়া করে আপনার পূর্ণ নাম লিখুন');
+        return;
+      }
+      if (!email.trim()) {
+        setAuthError('দয়া করে সঠিক ইমেইল এড্রেস লিখুন');
+        return;
+      }
+      if (password.length < 6) {
+        setAuthError('পাসওয়ার্ড ন্যূনতম ৬ অক্ষরের হতে হবে');
+        return;
+      }
+      setLoading(true);
+      try {
+        const newUser = await authService.registerWithEmail({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          upazila,
+          phone: phone.trim(),
+        });
+        onLogin(newUser);
+        showToast(`অভিনন্দন, ${name}! আপনার নাগরিক অ্যাকাউন্ট তৈরি সম্পন্ন হয়েছে।`);
+      } catch (err: any) {
+        const code = err?.code || '';
+        if (code === 'auth/email-already-in-use') {
+          setAuthError('এই ইমেইলটি ইতিমধ্যে নিবন্ধিত। অনুগ্রহ করে লগইন করুন।');
+        } else {
+          setAuthError(err?.message || 'নিবন্ধন ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।');
+        }
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -209,8 +234,24 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
                   </span>
                 </div>
 
-                <div className="mt-2 text-[11px] text-slate-400">
-                  যোগদানের তারিখ: {currentUser.joinedDate || '২০২৬'}
+                <div className="mt-2 text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
+                  <span>যোগদানের তারিখ: {currentUser.joinedDate || '২০২৬'}</span>
+                  {currentUser.id && (
+                    <span className="inline-flex items-center gap-1 font-mono text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                      <span>UID: {currentUser.id.substring(0, 12)}...</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(currentUser.id);
+                          showToast('UID কপি করা হয়েছে!');
+                        }}
+                        className="text-emerald-600 hover:text-emerald-700 font-bold ml-1 cursor-pointer"
+                        title="সম্পূর্ণ UID কপি করুন"
+                      >
+                        কপি
+                      </button>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -449,10 +490,16 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
           </p>
         </div>
 
+        {authError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl">
+            {authError}
+          </div>
+        )}
+
         <form onSubmit={handleAuth} className="space-y-3.5 text-xs sm:text-sm">
           {authMode === 'register' && (
             <div>
-              <label className="block font-bold text-slate-700 mb-1">পূর্ণ নাম *</label>
+              <label className="block font-bold text-slate-700 mb-1">আপনার পূর্ণ নাম *</label>
               <input
                 type="text"
                 required
@@ -465,13 +512,13 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
           )}
 
           <div>
-            <label className="block font-bold text-slate-700 mb-1">মোবাইল নম্বর *</label>
+            <label className="block font-bold text-slate-700 mb-1">ইমেইল এড্রেস *</label>
             <input
-              type="tel"
+              type="email"
               required
-              placeholder="017xxxxxxxx"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              placeholder="example@mail.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white"
             />
           </div>
@@ -481,32 +528,71 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
             <input
               type="password"
               required
-              placeholder="পাসওয়ার্ড দিন"
+              minLength={6}
+              placeholder="পাসওয়ার্ড দিন (কমপক্ষে ৬ অক্ষর)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white"
             />
           </div>
 
+          {authMode === 'register' && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">উপজেলা</label>
+                  <select
+                    value={upazila}
+                    onChange={(e) => setUpazila(e.target.value as Upazila)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs"
+                  >
+                    {[
+                      'জামালপুর সদর',
+                      'মেলান্দহ',
+                      'মাদারগঞ্জ',
+                      'ইসলামপুর',
+                      'সরিষাবাড়ী',
+                      'দেওয়ানগঞ্জ',
+                      'বকশীগঞ্জ',
+                    ].map((up) => (
+                      <option key={up} value={up}>
+                        {up}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">মোবাইল নম্বর (ঐচ্ছিক)</label>
+                  <input
+                    type="tel"
+                    placeholder="01XXXXXXXXX"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white"
+                  />
+                </div>
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 leading-relaxed">
+                🛡️ <strong>নিরাপত্তা নীতি:</strong> সাইনআপের মাধ্যমে প্রতিটি একাউন্ট ডিফল্টভাবে সাধারণ "user" রোল পাবে। এডমিন রোল সার্ভার-সাইড সিকিউরিটি রুলস দ্বারা সুরক্ষিত।
+              </div>
+            </>
+          )}
+
           <button
             type="submit"
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer"
+            disabled={loading}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {authMode === 'login' ? 'লগইন করুন' : 'নিবন্ধন সম্পন্ন করুন'}
+            {loading ? (
+              <span>অপেক্ষা করুন...</span>
+            ) : authMode === 'login' ? (
+              'লগইন করুন'
+            ) : (
+              'নিবন্ধন সম্পন্ন করুন'
+            )}
           </button>
         </form>
-
-        {/* Quick Admin Access for Founder/Owner */}
-        <div className="pt-4 border-t border-slate-100 text-center space-y-2">
-          <span className="text-[11px] text-slate-400 block">ওয়েবসাইট প্রতিষ্ঠাতা ও অ্যাডমিন লগইন:</span>
-          <button
-            onClick={handleAdminQuickLogin}
-            className="w-full py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 font-bold text-xs cursor-pointer transition flex items-center justify-center gap-1.5"
-          >
-            <ShieldCheck className="w-4 h-4 text-purple-700" />
-            <span>পরিচালক একাউন্টে প্রবেশ (মাসুদ রানা — ০১৩১৫৪৮১৮৭৯)</span>
-          </button>
-        </div>
       </div>
     </div>
   );
