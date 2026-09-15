@@ -20,8 +20,27 @@ import {
 import { storageService } from '../services/storageService';
 import { BusItem, TrainItem } from '../types';
 
-export const TransportView: React.FC = () => {
-  const [activeSubTab, setActiveSubTab] = useState<'train' | 'bus'>('train');
+interface TransportViewProps {
+  initialSubTab?: 'train' | 'bus';
+  initialType?: string;
+  onOpenTicketBooking?: () => void;
+}
+
+export const TransportView: React.FC<TransportViewProps> = ({
+  initialSubTab = 'train',
+  initialType,
+  onOpenTicketBooking,
+}) => {
+  const defaultTab = initialType === 'bus' || initialSubTab === 'bus' ? 'bus' : 'train';
+  const [activeSubTab, setActiveSubTab] = useState<'train' | 'bus'>(defaultTab);
+
+  React.useEffect(() => {
+    if (initialType === 'bus' || initialSubTab === 'bus') {
+      setActiveSubTab('bus');
+    } else if (initialType === 'train' || initialSubTab === 'train') {
+      setActiveSubTab('train');
+    }
+  }, [initialType, initialSubTab]);
   const [buses] = useState<BusItem[]>(storageService.getBuses());
   const [trains] = useState<TrainItem[]>(storageService.getTrains());
   const [searchQuery, setSearchQuery] = useState('');

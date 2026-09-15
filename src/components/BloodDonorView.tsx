@@ -1,14 +1,24 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { HeartPulse, Phone, MessageCircle, PlusCircle, Search, MapPin, Calendar, CheckCircle2, X } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { BloodDonor, BloodGroup, Upazila } from '../types';
 
-export const BloodDonorView: React.FC = () => {
+interface Props {
+  initialOpenRegister?: boolean;
+}
+
+export const BloodDonorView: React.FC<Props> = ({ initialOpenRegister = false }) => {
   const [donors, setDonors] = useState<BloodDonor[]>(storageService.getBloodDonors());
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [selectedUpazila, setSelectedUpazila] = useState<Upazila>('সকল উপজেলা');
   const [searchQuery, setSearchQuery] = useState('');
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(initialOpenRegister);
+
+  useEffect(() => {
+    if (initialOpenRegister) {
+      setIsRegisterModalOpen(true);
+    }
+  }, [initialOpenRegister]);
 
   // Form State
   const [formName, setFormName] = useState('');

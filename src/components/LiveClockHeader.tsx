@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, MapPin, Sun, Moon, CloudSun, Download, Smartphone, HardDrive, Wifi, WifiOff, Share2, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Clock, Calendar, MapPin, Sun, Moon, CloudSun, Download, Smartphone, HardDrive, Wifi, WifiOff, Share2, RefreshCw, MoreHorizontal, ChevronDown, Check } from 'lucide-react';
 import { Upazila } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 
@@ -11,6 +11,7 @@ interface Props {
   onOpenInstallApp?: () => void;
   onOpenStorageCache?: () => void;
   onOpenAppUpdate?: () => void;
+  isAdmin?: boolean;
 }
 
 export const LiveClockHeader: React.FC<Props> = ({
@@ -21,12 +22,25 @@ export const LiveClockHeader: React.FC<Props> = ({
   onOpenInstallApp,
   onOpenStorageCache,
   onOpenAppUpdate,
+  isAdmin = false,
 }) => {
   const [time, setTime] = useState<string>('');
   const [dateStr, setDateStr] = useState<string>('');
   const [banglaDate, setBanglaDate] = useState<string>('১৪ ভাদ্র ১৪৩৩ বঙ্গাব্দ');
   const [hijriDate, setHijriDate] = useState<string>('১৫ সফর ১৪৪৮ হিজরি');
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [isMoreToolsOpen, setIsMoreToolsOpen] = useState<boolean>(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMoreToolsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -95,42 +109,14 @@ export const LiveClockHeader: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Right: Jamalpur weather, Upazila Selector, App Install & Quick ZIP Download */}
-        <div className="flex items-center flex-wrap justify-center sm:justify-end gap-2">
-          {/* Storage & Offline Cache Manager Trigger */}
-          {onOpenStorageCache && (
-            <button
-              id="topbar-storage-cache-btn"
-              onClick={onOpenStorageCache}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded shadow-xs text-[11px] font-bold cursor-pointer transition ${
-                isOnline
-                  ? 'bg-emerald-800 hover:bg-emerald-700 text-emerald-100 border border-emerald-600/70'
-                  : 'bg-amber-500 hover:bg-amber-400 text-slate-950 border border-amber-300 font-extrabold animate-pulse'
-              }`}
-              title="লোকাল স্টোরেজ ও অফলাইন ক্যাশ ম্যানেজার"
-            >
-              <HardDrive className="w-3 h-3 shrink-0" />
-              <span>{isOnline ? 'ক্যাশ সিঙ্ক' : 'অফলাইন মোড'}</span>
-            </button>
-          )}
-
-          {onOpenAppUpdate && (
-            <button
-              id="topbar-update-app-btn"
-              onClick={onOpenAppUpdate}
-              className="flex items-center gap-1 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 text-slate-950 font-black px-2.5 py-1 rounded shadow-xs text-[11px] cursor-pointer transition active:scale-95"
-              title="নতুন ফিচার যোগ করা হলে এখানে ক্লিক করে তাৎক্ষণিক আপডেট আনুন"
-            >
-              <RefreshCw className="w-3 h-3 text-slate-950 stroke-[2.5]" />
-              <span>নতুন ফিচার আনুন</span>
-            </button>
-          )}
-
+        {/* Right: Jamalpur weather, Upazila Selector, Clean Tools Dropdown */}
+        <div className="flex items-center flex-wrap justify-center sm:justify-end gap-1.5 sm:gap-2">
+          {/* Quick Install Button (High value for PWA) */}
           {onOpenInstallApp && (
             <button
               id="topbar-install-app-btn"
               onClick={onOpenInstallApp}
-              className="flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black px-2.5 py-1 rounded shadow-xs text-[11px] cursor-pointer transition"
+              className="hidden sm:flex items-center gap-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black px-2.5 py-1 rounded-lg shadow-xs text-[11px] cursor-pointer transition"
               title="Our Jamalpur মোবাইল অ্যাপ ইনস্টল করুন"
             >
               <Smartphone className="w-3 h-3 text-slate-950 stroke-[2.5]" />
@@ -138,22 +124,102 @@ export const LiveClockHeader: React.FC<Props> = ({
             </button>
           )}
 
-          {onOpenExportZip && (
+          {/* Clean 'টুলস ও আপডেট' / 'More' Dropdown menu for secondary utilities */}
+          <div className="relative" ref={dropdownRef}>
             <button
-              id="topbar-zip-btn"
-              onClick={onOpenExportZip}
-              className="flex items-center gap-1 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-2.5 py-1 rounded shadow-xs text-[11px] cursor-pointer transition"
-              title="সম্পূর্ণ প্রজেক্টের ZIP ডাউনলোড করুন"
+              id="topbar-tools-dropdown-btn"
+              onClick={() => setIsMoreToolsOpen(!isMoreToolsOpen)}
+              className="flex items-center gap-1 bg-emerald-950 hover:bg-emerald-900 text-emerald-200 border border-emerald-700/80 px-2 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition shadow-2xs"
+              title="আরও অপশন ও সেটিংস"
             >
-              <Download className="w-3 h-3 text-slate-900" />
-              <span>ZIP</span>
+              <RefreshCw className="w-3 h-3 text-amber-300" />
+              <span className="hidden xs:inline">টুলস ও সিঙ্ক</span>
+              <ChevronDown className="w-3 h-3 text-emerald-400" />
             </button>
-          )}
+
+            {isMoreToolsOpen && (
+              <div className="absolute right-0 mt-1.5 w-56 bg-slate-900 border border-emerald-700/80 rounded-xl shadow-2xl z-50 py-1.5 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="px-3 py-1.5 border-b border-slate-800 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                  সিস্টেম টুলস
+                </div>
+
+                {onOpenAppUpdate && (
+                  <button
+                    onClick={() => {
+                      onOpenAppUpdate();
+                      setIsMoreToolsOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-slate-200 hover:bg-emerald-950/70 hover:text-emerald-300 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                    <div>
+                      <div className="font-bold">নতুন ফিচার আনুন</div>
+                      <div className="text-[10px] text-slate-400">লাইভ আপডেট সিঙ্ক করুন</div>
+                    </div>
+                  </button>
+                )}
+
+                {onOpenStorageCache && (
+                  <button
+                    onClick={() => {
+                      onOpenStorageCache();
+                      setIsMoreToolsOpen(false);
+                    }}
+                    className="w-full text-left px-3 py-2 text-slate-200 hover:bg-emerald-950/70 hover:text-emerald-300 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <HardDrive className="w-3.5 h-3.5 text-teal-400" />
+                    <div>
+                      <div className="font-bold">{isOnline ? 'ক্যাশ ও অফলাইন ডাটা' : 'অফলাইন মেমোরি'}</div>
+                      <div className="text-[10px] text-slate-400">লোকাল স্টোরেজ পরিচালনা</div>
+                    </div>
+                  </button>
+                )}
+
+                {onOpenInstallApp && (
+                  <button
+                    onClick={() => {
+                      onOpenInstallApp();
+                      setIsMoreToolsOpen(false);
+                    }}
+                    className="sm:hidden w-full text-left px-3 py-2 text-slate-200 hover:bg-emerald-950/70 hover:text-emerald-300 flex items-center gap-2 transition cursor-pointer"
+                  >
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                    <div>
+                      <div className="font-bold">মোবাইল অ্যাপ ইনস্টল</div>
+                      <div className="text-[10px] text-slate-400">হোম স্ক্রিনে সেভ করুন</div>
+                    </div>
+                  </button>
+                )}
+
+                {/* ZIP Button: Restricted to Admin only */}
+                {isAdmin && onOpenExportZip && (
+                  <div className="border-t border-slate-800/80 mt-1 pt-1">
+                    <button
+                      onClick={() => {
+                        onOpenExportZip();
+                        setIsMoreToolsOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-amber-300 hover:bg-amber-950/40 flex items-center gap-2 transition cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5 text-amber-400" />
+                      <div>
+                        <div className="font-bold flex items-center gap-1">
+                          <span>প্রজেক্ট ZIP ব্যাকআপ</span>
+                          <span className="text-[9px] bg-amber-500/20 text-amber-300 px-1 py-0.2 rounded">অ্যাডমিন</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400">Spck Editor সোর্স কোড</div>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Jamalpur Weather */}
           <div className="hidden md:flex items-center gap-1 text-[11px] text-amber-300 bg-emerald-950/50 px-2 py-1 rounded border border-emerald-800">
             <CloudSun className="w-3.5 h-3.5" />
-            <span>২৯°C (আংশিক মেঘলা)</span>
+            <span>২৯°C</span>
           </div>
 
           {/* Global Theme Switcher */}

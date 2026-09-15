@@ -1,15 +1,25 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Briefcase, MapPin, Calendar, Building, DollarSign, Clock, Search, Send, CheckCircle2, X, PlusCircle, Sparkles } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { JobItem, Upazila } from '../types';
 import { MonetizationModal } from './MonetizationModal';
 
-export const JobsView: React.FC = () => {
+interface Props {
+  initialOpenPostJob?: boolean;
+}
+
+export const JobsView: React.FC<Props> = ({ initialOpenPostJob = false }) => {
   const [jobs, setJobs] = useState<JobItem[]>(storageService.getJobs());
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedJob, setSelectedJob] = useState<JobItem | null>(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
-  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(false);
+  const [isPostJobModalOpen, setIsPostJobModalOpen] = useState(initialOpenPostJob);
+
+  useEffect(() => {
+    if (initialOpenPostJob) {
+      setIsPostJobModalOpen(true);
+    }
+  }, [initialOpenPostJob]);
 
   // Application form state
   const [applicantName, setApplicantName] = useState('');

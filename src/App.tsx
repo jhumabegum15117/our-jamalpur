@@ -71,13 +71,10 @@ export function App() {
   useEffect(() => {
     let initialAuthChecked = false;
     const unsubscribe = authService.subscribeToAuthState((user) => {
-      setCurrentUser(user);
+      const activeUser = user || storageService.getCurrentUser();
+      setCurrentUser(activeUser);
       if (!initialAuthChecked) {
         initialAuthChecked = true;
-        // On any device/mobile where no user is logged in, show user login option first!
-        if (!user) {
-          setIsAuthOpen(true);
-        }
       }
     });
     return () => unsubscribe();
@@ -151,6 +148,8 @@ export function App() {
     setCurrentUser(null);
   };
 
+  const isAdmin = isUserAdmin(currentUser);
+
   // Keyboard shortcut for search (Cmd+K or Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -199,6 +198,7 @@ export function App() {
         onOpenInstallApp={() => setIsInstallModalOpen(true)}
         onOpenStorageCache={() => setIsStorageModalOpen(true)}
         onOpenAppUpdate={() => setIsUpdateModalOpen(true)}
+        isAdmin={isAdmin}
       />
 
       {/* 2. Emergency Hotlines Bar */}
@@ -272,29 +272,65 @@ export function App() {
         {activeTab === 'mfs-transfer' && <MfsTransferView />}
 
         {activeTab === 'news' && (
-          <NewsView selectedNews={selectedExtraItem} />
+          <NewsView
+            selectedNews={selectedExtraItem?.openCitizenNews ? null : selectedExtraItem}
+            initialOpenCitizenNews={selectedExtraItem?.openCitizenNews === true}
+          />
         )}
 
         {activeTab === 'weather' && <WeatherView />}
 
         {activeTab === 'helplines' && <HelplinesView />}
 
-        {activeTab === 'transport' && <TransportView />}
-        {activeTab === 'bus' && <TransportView />}
-        {activeTab === 'train' && <TransportView />}
+        {activeTab === 'transport' && (
+          <TransportView
+            initialSubTab="train"
+            onOpenTicketBooking={() => setIsAuthOpen(true)}
+          />
+        )}
+        {activeTab === 'bus' && (
+          <TransportView
+            initialSubTab="bus"
+            initialType="bus"
+            onOpenTicketBooking={() => setIsAuthOpen(true)}
+          />
+        )}
+        {activeTab === 'train' && (
+          <TransportView
+            initialSubTab="train"
+            initialType="train"
+            onOpenTicketBooking={() => setIsAuthOpen(true)}
+          />
+        )}
 
-        {activeTab === 'hospital' && <HealthView defaultSubTab="hospital" />}
-        {activeTab === 'doctors' && <HealthView defaultSubTab="doctors" />}
+        {activeTab === 'hospital' && (
+          <HealthView
+            defaultSubTab="hospital"
+            currentUser={currentUser}
+            onOpenAuth={() => setIsAuthOpen(true)}
+          />
+        )}
+        {activeTab === 'doctors' && (
+          <HealthView
+            defaultSubTab="doctors"
+            currentUser={currentUser}
+            onOpenAuth={() => setIsAuthOpen(true)}
+          />
+        )}
 
         {activeTab === 'medicine' && <MedicineView />}
 
-        {activeTab === 'jobs' && <JobsView />}
+        {activeTab === 'jobs' && (
+          <JobsView initialOpenPostJob={selectedExtraItem?.openPostJob === true} />
+        )}
 
         {activeTab === 'education' && <EducationView />}
 
         {activeTab === 'quiz' && <QuizView currentUser={currentUser} />}
 
-        {activeTab === 'blood-donor' && <BloodDonorView />}
+        {activeTab === 'blood-donor' && (
+          <BloodDonorView initialOpenRegister={selectedExtraItem?.openRegister === true} />
+        )}
 
         {activeTab === 'prayer' && <PrayerTimeView />}
 
@@ -314,12 +350,24 @@ export function App() {
         )}
 
         {/* Admin Panel strictly restricted to Admin users with ID & Password */}
-        {activeTab === 'admin' && (
+        {(activeTab === 'admin' ||
+          activeTab === 'admin-earnings' ||
+          activeTab === 'admin-earnings-history' ||
+          activeTab === 'admin-balance') && (
           isUserAdmin(currentUser) ? (
             <AdminPanelView
               onRefresh={() => setRefreshKey((k) => k + 1)}
               onOpenAppUpdate={() => setIsUpdateModalOpen(true)}
               onOpenShareApp={() => setIsShareModalOpen(true)}
+              initialTab={
+                activeTab === 'admin-earnings'
+                  ? 'earnings'
+                  : activeTab === 'admin-earnings-history'
+                  ? 'earnings-history'
+                  : activeTab === 'admin-balance'
+                  ? 'balance'
+                  : 'dashboard'
+              }
             />
           ) : (
             <AdminLoginGuard

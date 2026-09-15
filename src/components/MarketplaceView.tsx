@@ -45,6 +45,13 @@ export const MarketplaceView: React.FC<Props> = ({
   const [activeModalProduct, setActiveModalProduct] = useState<ProductItem | null>(initialSelected || null);
   const [isPostAdModalOpen, setIsPostAdModalOpen] = useState(initialOpenPostAd);
 
+  // Synchronize when product is selected from search or external link
+  React.useEffect(() => {
+    if (initialSelected) {
+      setActiveModalProduct(initialSelected);
+    }
+  }, [initialSelected]);
+
   // Synchronize when parent requests opening ad modal
   React.useEffect(() => {
     if (initialOpenPostAd) {

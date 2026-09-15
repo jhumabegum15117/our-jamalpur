@@ -75,22 +75,9 @@ export const AdminLoginGuard: React.FC<Props> = ({ onSuccess, onNavigateHome }) 
       {/* Admin Login Form */}
       <form onSubmit={handleAdminLogin} className="space-y-4">
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-              অ্যাডমিন আইডি / মোবাইল / ইমেইল <span className="text-rose-500">*</span>
-            </label>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('01315481879');
-                setPassword('15117');
-                setError(null);
-              }}
-              className="text-[11px] font-extrabold text-purple-700 dark:text-purple-300 hover:underline bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded-md border border-purple-200 dark:border-purple-800 cursor-pointer"
-            >
-              স্বয়ংক্রিয় তথ্য বসান ➔
-            </button>
-          </div>
+          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+            অ্যাডমিন আইডি / মোবাইল / ইমেইল <span className="text-rose-500">*</span>
+          </label>
           <div className="relative">
             <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             <input
@@ -98,7 +85,7 @@ export const AdminLoginGuard: React.FC<Props> = ({ onSuccess, onNavigateHome }) 
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="01315481879 বা masudrana15117@gmail.com"
+              placeholder="মোবাইল নম্বর অথবা ইমেইল"
               className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-purple-500"
             />
           </div>
@@ -129,16 +116,15 @@ export const AdminLoginGuard: React.FC<Props> = ({ onSuccess, onNavigateHome }) 
           </div>
         </div>
 
-        {/* Quick Credentials Info Box */}
-        <div className="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1">
-          <div className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-            <span>অ্যাডমিন মাস্টার এক্সেস তথ্য:</span>
+        {/* Security Note */}
+        <div className="p-3 bg-purple-50/50 dark:bg-purple-950/30 rounded-xl border border-purple-200/50 dark:border-purple-800/40 text-xs text-purple-900 dark:text-purple-200 space-y-1">
+          <div className="font-bold flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 shrink-0" />
+            <span>অ্যাডমিন নিরাপত্তা বিজ্ঞপ্তি:</span>
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 space-y-0.5 pl-3 border-l-2 border-purple-400">
-            <div><strong className="text-slate-700 dark:text-slate-300">আইডি:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-purple-600 dark:text-purple-400">01315481879</code> বা <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-purple-600 dark:text-purple-400">masudrana15117@gmail.com</code></div>
-            <div><strong className="text-slate-700 dark:text-slate-300">পাসওয়ার্ড:</strong> <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-emerald-600 dark:text-emerald-400 font-bold">15117</code> বা <code className="bg-white dark:bg-slate-900 px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 font-mono text-emerald-600 dark:text-emerald-400 font-bold">jamalpur15117</code></div>
-          </div>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 pl-4 leading-relaxed">
+            এডমিন ড্যাশবোর্ডে প্রবেশের জন্য আপনার অনুমোদিত অ্যাডমিন মোবাইল নম্বর অথবা ইমেইল এবং পাসওয়ার্ড প্রদান করুন।
+          </p>
         </div>
 
         <button

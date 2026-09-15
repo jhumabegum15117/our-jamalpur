@@ -84,7 +84,24 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // 8. Health check test doc
+    // 8. Doctor Appointment Bookings: logged-in user can create, read their own bookings or admin can manage all
+    match /appointments/{appointmentId} {
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+    }
+
+    // 9. Private Platform Earnings Log - strictly accessible by Admin/Owner only
+    match /earnings_log/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 10. Private Owner Withdrawals Management - strictly accessible by Admin/Owner only
+    match /owner_withdrawals/{withdrawalId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 11. Health check test doc
     match /test/{docId} {
       allow read: if true;
     }

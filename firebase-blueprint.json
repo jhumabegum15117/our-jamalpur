@@ -30,6 +30,14 @@
           "enum": ["admin", "user"],
           "description": "Authorization role"
         },
+        "avatar": {
+          "type": "string",
+          "description": "Profile picture URL or compressed base64 image data"
+        },
+        "bio": {
+          "type": "string",
+          "description": "Short user biography or description"
+        },
         "createdAt": {
           "type": "string",
           "description": "ISO timestamp of account creation"
@@ -92,6 +100,52 @@
         "phone": { "type": "string" }
       },
       "required": ["name", "specialty"]
+    },
+    "DoctorAppointmentBooking": {
+      "title": "DoctorAppointmentBooking",
+      "description": "Doctor appointment slot booking submitted by registered users",
+      "type": "object",
+      "properties": {
+        "doctorId": { "type": "string" },
+        "doctorName": { "type": "string" },
+        "specialty": { "type": "string" },
+        "hospitalOrChamber": { "type": "string" },
+        "patientName": { "type": "string" },
+        "patientPhone": { "type": "string" },
+        "preferredDate": { "type": "string" },
+        "preferredSlot": { "type": "string" },
+        "userId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "cancelled"] },
+        "consultationFee": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["doctorId", "doctorName", "patientName", "patientPhone", "preferredDate", "userId", "status"]
+    },
+    "EarningsLog": {
+      "title": "EarningsLog",
+      "description": "Private platform revenue logs strictly for admin and owner",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number", "description": "Earnings amount in BDT" },
+        "source": { "type": "string", "enum": ["মার্কেটপ্লেস_কমিশন", "বিজ্ঞাপন_রাজস্ব", "বোনাস"], "description": "Income source category" },
+        "description": { "type": "string", "description": "Earnings description or transaction detail" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of earnings record" }
+      },
+      "required": ["amount", "source", "description", "createdAt"]
+    },
+    "OwnerWithdrawal": {
+      "title": "OwnerWithdrawal",
+      "description": "Private owner payout withdrawal requests and disbursements",
+      "type": "object",
+      "properties": {
+        "amount": { "type": "number", "description": "Withdrawal amount in BDT" },
+        "method": { "type": "string", "enum": ["বিকাশ", "নগদ", "ব্যাংক ট্রান্সফার"], "description": "Disbursement method" },
+        "accountNumber": { "type": "string", "description": "Target phone or bank account number" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"], "description": "Withdrawal status" },
+        "notes": { "type": "string", "description": "Admin notes or transaction reference" },
+        "createdAt": { "type": "string", "description": "ISO timestamp of withdrawal request" }
+      },
+      "required": ["amount", "method", "accountNumber", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -114,6 +168,18 @@
     "/doctors/{doctorId}": {
       "schema": "DoctorItem",
       "description": "Verified medical practitioner profiles"
+    },
+    "/appointments/{appointmentId}": {
+      "schema": "DoctorAppointmentBooking",
+      "description": "User booked doctor appointments"
+    },
+    "/earnings_log/{logId}": {
+      "schema": "EarningsLog",
+      "description": "Private admin platform revenue and commission records"
+    },
+    "/owner_withdrawals/{withdrawalId}": {
+      "schema": "OwnerWithdrawal",
+      "description": "Private owner withdrawal records"
     }
   }
 }

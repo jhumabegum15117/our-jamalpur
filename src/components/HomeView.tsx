@@ -100,7 +100,7 @@ export const HomeView: React.FC<Props> = ({
   }> = [
     {
       id: 'mfs-transfer',
-      title: 'MFS আন্তঃ লেনদেন',
+      title: 'MFS আন্তঃ লেনদেন ও ফান্ড ট্রান্সফার',
       subtitle: 'বিকাশ-রকেট-নগদ ট্রান্সফার',
       icon: ArrowRightLeft,
       color: 'text-emerald-700',
@@ -611,6 +611,8 @@ export const HomeView: React.FC<Props> = ({
                   src={item.image}
                   alt={item.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
                 />
                 <span className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-xs">
                   {item.category}

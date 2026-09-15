@@ -36,22 +36,46 @@ import {
   Send,
   CheckCircle,
   Calculator,
+  Calendar,
+  Stethoscope,
+  Clock as ClockIcon,
+  Wallet,
+  ArrowDownCircle,
+  History,
 } from 'lucide-react';
 import { storageService, OWNER_PAYMENT_INFO } from '../services/storageService';
 import { isUserAdmin } from '../services/authService';
-import { NewsItem, ProductItem, SiteSettings, MonetizationRequest, AdBannerItem } from '../types';
+import { NewsItem, ProductItem, SiteSettings, MonetizationRequest, AdBannerItem, DoctorAppointmentBooking } from '../types';
 import { ThemeToggle } from './ThemeToggle';
 import { AdminMonetizationChart } from './AdminMonetizationChart';
 import { AdPricingCalculator } from './AdPricingCalculator';
+import { AdminEarningsDashboardView } from './AdminEarningsDashboardView';
+import { AdminEarningsHistoryView } from './AdminEarningsHistoryView';
+import { AdminBalanceView } from './AdminBalanceView';
+import { AdminWithdrawalView } from './AdminWithdrawalView';
 
 interface Props {
   onRefresh: () => void;
   onOpenAppUpdate?: () => void;
   onOpenShareApp?: () => void;
+  initialTab?: 'dashboard' | 'earnings' | 'earnings-history' | 'balance' | 'withdrawals' | 'monetization' | 'ad_calculator' | 'appointments' | 'app_control' | 'news' | 'products' | 'settings';
 }
 
-export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, onOpenShareApp }) => {
-  const [activeAdminTab, setActiveAdminTab] = useState<'dashboard' | 'monetization' | 'ad_calculator' | 'app_control' | 'news' | 'products' | 'settings'>('dashboard');
+export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, onOpenShareApp, initialTab = 'dashboard' }) => {
+  const [activeAdminTab, setActiveAdminTab] = useState<
+    | 'dashboard'
+    | 'earnings'
+    | 'earnings-history'
+    | 'balance'
+    | 'withdrawals'
+    | 'monetization'
+    | 'ad_calculator'
+    | 'appointments'
+    | 'app_control'
+    | 'news'
+    | 'products'
+    | 'settings'
+  >(initialTab);
   const [copiedLinkType, setCopiedLinkType] = useState<string | null>(null);
   const [isUpdatingApp, setIsUpdatingApp] = useState(false);
   const [isSyncingCache, setIsSyncingCache] = useState(false);
@@ -63,6 +87,7 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
   const [settings, setSettings] = useState<SiteSettings>(storageService.getSettings());
   const [monetizationRequests, setMonetizationRequests] = useState<MonetizationRequest[]>(storageService.getMonetizationRequests());
   const [adBanners, setAdBanners] = useState<AdBannerItem[]>(storageService.getAdBanners());
+  const [appointments, setAppointments] = useState<DoctorAppointmentBooking[]>(storageService.getAppointments());
 
   // Add News Form State
   const [newsTitle, setNewsTitle] = useState('');
@@ -281,8 +306,13 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
           <ThemeToggle variant="compact" />
           {[
             { id: 'dashboard', label: 'পরিসংখ্যান', icon: Layers },
-            { id: 'monetization', label: `ইনকাম ও বিজ্ঞাপন (${pendingCount > 0 ? `+${pendingCount}` : 'সক্রিয়'})`, icon: DollarSign, highlight: pendingCount > 0 },
+            { id: 'earnings', label: 'আয় ড্যাশবোর্ড', icon: DollarSign },
+            { id: 'earnings-history', label: 'আয়ের খতিয়ান', icon: History },
+            { id: 'balance', label: 'ব্যালেন্স ও তহবিল', icon: Wallet },
+            { id: 'withdrawals', label: 'উইথড্রয়াল', icon: ArrowDownCircle },
+            { id: 'monetization', label: `বিজ্ঞাপন আবেদন (${pendingCount > 0 ? `+${pendingCount}` : 'সক্রিয়'})`, icon: Sparkles, highlight: pendingCount > 0 },
             { id: 'ad_calculator', label: 'বিজ্ঞাপন ক্যালকুলেটর', icon: Calculator },
+            { id: 'appointments', label: `অ্যাপয়েন্টমেন্ট (${appointments.length})`, icon: Calendar },
             { id: 'app_control', label: 'অ্যাপ লিংক ও আপডেট', icon: Share2 },
             { id: 'news', label: 'সংবাদ', icon: Newspaper },
             { id: 'products', label: 'পণ্য নিয়ন্ত্রণ', icon: ShoppingBag },
@@ -386,6 +416,38 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
             adBanners={adBanners}
           />
         </div>
+      )}
+
+      {/* Admin Earnings Dashboard Subview */}
+      {activeAdminTab === 'earnings' && (
+        <AdminEarningsDashboardView
+          onNavigateToHistory={() => setActiveAdminTab('earnings-history')}
+          onNavigateToBalance={() => setActiveAdminTab('balance')}
+          onNavigateToWithdrawal={() => setActiveAdminTab('withdrawals')}
+          onRefresh={onRefresh}
+        />
+      )}
+
+      {/* Admin Earnings History Subview */}
+      {activeAdminTab === 'earnings-history' && (
+        <AdminEarningsHistoryView
+          onBackToDashboard={() => setActiveAdminTab('earnings')}
+          onRefresh={onRefresh}
+        />
+      )}
+
+      {/* Admin Balance Subview */}
+      {activeAdminTab === 'balance' && (
+        <AdminBalanceView
+          onBackToDashboard={() => setActiveAdminTab('earnings')}
+          onNavigateToWithdrawal={() => setActiveAdminTab('withdrawals')}
+          onNavigateToHistory={() => setActiveAdminTab('earnings-history')}
+        />
+      )}
+
+      {/* Admin Withdrawals Subview */}
+      {activeAdminTab === 'withdrawals' && (
+        <AdminWithdrawalView onRefresh={onRefresh} />
       )}
 
       {/* Monetization Subview */}
@@ -758,6 +820,150 @@ export const AdminPanelView: React.FC<Props> = ({ onRefresh, onOpenAppUpdate, on
       {activeAdminTab === 'ad_calculator' && (
         <div className="space-y-6 animate-fade-in">
           <AdPricingCalculator onApplyToBanner={handleApplyFromCalculator} />
+        </div>
+      )}
+
+      {/* Appointments Management Subview */}
+      {activeAdminTab === 'appointments' && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                <span>ডাক্তার অ্যাপয়েন্টমেন্ট ও সিরিয়াল তালিকা</span>
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                নাগরিকদের বুকিং করা অ্যাপয়েন্টমেন্ট যাচাই, স্ট্যাটাস পরিবর্তন ও সিরিয়াল পরিচালনা করুন।
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                মোট আবেদন: {appointments.length} টি
+              </span>
+            </div>
+          </div>
+
+          {appointments.length === 0 ? (
+            <div className="py-16 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+              <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+              <h3 className="font-extrabold text-sm text-slate-700 dark:text-slate-300">
+                কোনো অ্যাপয়েন্টমেন্ট বুকিং জমা হয়নি
+              </h3>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-sm mx-auto">
+                নাগরিকরা যখন ডাক্তার তালিকা থেকে কোনো ডাক্তারের জন্য অ্যাপয়েন্টমেন্ট অনুরোধ পাঠাবে, তা এখানে প্রদর্শিত হবে।
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {appointments.map((apt) => (
+                <div
+                  key={apt.id}
+                  className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+                >
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-teal-50 dark:bg-teal-950 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
+                      <Stethoscope className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                          {apt.doctorName}
+                        </h3>
+                        <span
+                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                            apt.status === 'confirmed'
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
+                              : apt.status === 'cancelled'
+                              ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                          }`}
+                        >
+                          {apt.status === 'confirmed'
+                            ? 'অনুমোদিত / কনফার্ম'
+                            : apt.status === 'cancelled'
+                            ? 'বাতিলকৃত'
+                            : 'অপেক্ষমান'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-teal-700 dark:text-teal-400 font-medium">
+                        {apt.specialty} • {apt.hospitalOrChamber}
+                      </p>
+
+                      <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl">
+                        <div>
+                          <strong>রোগীর নাম:</strong> {apt.patientName} {apt.patientAge ? `(${apt.patientAge})` : ''} [{apt.patientGender || 'পুরুষ'}]
+                        </div>
+                        <div>
+                          <strong>মোবাইল:</strong>{' '}
+                          <a href={`tel:${apt.patientPhone}`} className="text-teal-600 hover:underline font-bold">
+                            {apt.patientPhone}
+                          </a>
+                        </div>
+                        <div>
+                          <strong>তারিখ ও স্লট:</strong> {apt.preferredDate} ({apt.preferredSlot})
+                        </div>
+                        <div>
+                          <strong>পরামর্শ ফি:</strong> <span className="text-emerald-600 font-bold">৳{apt.consultationFee}</span>
+                        </div>
+                        {apt.symptoms && (
+                          <div className="col-span-full mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            <strong>লক্ষণ:</strong> {apt.symptoms}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-row md:flex-col items-center md:items-end gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5">
+                      {apt.status !== 'confirmed' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            storageService.updateAppointmentStatus(apt.id, 'confirmed');
+                            setAppointments(storageService.getAppointments());
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition cursor-pointer shadow-xs"
+                        >
+                          কনফার্ম করুন
+                        </button>
+                      )}
+                      {apt.status !== 'cancelled' && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            storageService.updateAppointmentStatus(apt.id, 'cancelled');
+                            setAppointments(storageService.getAppointments());
+                          }}
+                          className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-xs transition cursor-pointer"
+                        >
+                          বাতিল
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm('আপনি কি এই অ্যাপয়েন্টমেন্ট রেকর্ডটি মুছে ফেলতে চান?')) {
+                            storageService.deleteAppointment(apt.id);
+                            setAppointments(storageService.getAppointments());
+                          }
+                        }}
+                        className="p-1.5 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/60 rounded-xl transition cursor-pointer"
+                        title="মুছে ফেলুন"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <span className="font-mono text-[10px] text-slate-400">
+                      ID: {apt.id.slice(-6)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

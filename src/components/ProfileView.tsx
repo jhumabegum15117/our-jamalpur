@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   HeartPulse,
   Edit,
+  Check,
   CheckCircle2,
   Phone,
   Mail,
@@ -30,12 +31,16 @@ import {
   ArrowLeft,
   AlertCircle,
   Loader2,
+  Calendar,
+  Stethoscope,
+  Clock as ClockIcon,
 } from 'lucide-react';
 import { User as UserType, TabType, Upazila } from '../types';
 import { storageService } from '../services/storageService';
 import { authService, isUserAdmin } from '../services/authService';
-import masudRanaPhoto from '../assets/images/masud_rana_profile_1788024419763.jpg';
+import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 import { ThemeToggle } from './ThemeToggle';
+import { AvatarCropModal } from './AvatarCropModal';
 
 interface Props {
   currentUser: UserType | null;
@@ -44,7 +49,8 @@ interface Props {
   onNavigate: (tab: TabType, extra?: any) => void;
 }
 
-export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, onNavigate }) => {
+export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, onLogout, onNavigate }) => {
+  const currentUser = propUser || storageService.getCurrentUser();
   const [authMethod, setAuthMethod] = useState<'phone' | 'email'>('phone');
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   
@@ -60,11 +66,87 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [upazila, setUpazila] = useState<Upazila>('জামালপুর সদর');
-  const [isEditingPhoto, setIsEditingPhoto] = useState(false);
-  const [photoUrlInput, setPhotoUrlInput] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+
+  // Inline Profile Editing State
+  const [isEditingInline, setIsEditingInline] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [isSavingInline, setIsSavingInline] = useState(false);
+  const [inlineEditError, setInlineEditError] = useState<string | null>(null);
+
+  const startEditing = () => {
+    if (!currentUser) return;
+    setEditName(currentUser.name || '');
+    setEditBio(currentUser.bio || '');
+    setInlineEditError(null);
+    setIsEditingInline(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditingInline(false);
+    setInlineEditError(null);
+  };
+
+  const handleSaveInlineProfile = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!currentUser) return;
+    const trimmedName = editName.trim();
+    if (!trimmedName) {
+      setInlineEditError('দয়া করে আপনার নাম লিখুন');
+      return;
+    }
+
+    setIsSavingInline(true);
+    setInlineEditError(null);
+    try {
+      const updated = await authService.updateProfileData(currentUser.id, {
+        name: trimmedName,
+        bio: editBio.trim(),
+      });
+      const userToSet: UserType = updated || {
+        ...currentUser,
+        name: trimmedName,
+        bio: editBio.trim(),
+      };
+      onLogin(userToSet);
+      setIsEditingInline(false);
+      showToast('নাম ও বায়ো সফলভাবে ডাটাবেসে সেভ করা হয়েছে!');
+    } catch (err: any) {
+      setInlineEditError(err?.message || 'ডাটাবেসে সেভ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+    } finally {
+      setIsSavingInline(false);
+    }
+  };
+
+  const handleSaveAvatar = async (croppedDataUrl: string) => {
+    if (!currentUser) return;
+    try {
+      const updated = await authService.updateProfileData(currentUser.id, { avatar: croppedDataUrl });
+      const userToSet = updated || { ...currentUser, avatar: croppedDataUrl };
+      onLogin(userToSet);
+      showToast('প্রোফাইল ছবি সফলভাবে আপডেট ও ডাটাবেসে সেভ করা হয়েছে!');
+    } catch (err: any) {
+      showToast('ছবি সংরক্ষণ করতে সমস্যা হয়েছে');
+      throw err;
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    if (!currentUser) return;
+    try {
+      const updated = await authService.updateProfileData(currentUser.id, { avatar: '' });
+      const userToSet = updated || { ...currentUser, avatar: undefined };
+      onLogin(userToSet);
+      showToast('প্রোফাইল ছবি সফলভাবে মুছে ফেলা হয়েছে!');
+    } catch (err: any) {
+      showToast('ছবি মুছে ফেলতে সমস্যা হয়েছে');
+      throw err;
+    }
+  };
 
   // Timer cooldown
   useEffect(() => {
@@ -222,39 +304,16 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
     }
   };
 
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        const updated = storageService.updateCurrentUser({ avatar: base64 });
-        if (updated) {
-          onLogin(updated);
-          showToast('প্রোফাইল ছবি সফলভাবে আপডেট করা হয়েছে!');
-          setIsEditingPhoto(false);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSavePhotoUrl = () => {
-    if (!photoUrlInput.trim()) return;
-    const updated = storageService.updateCurrentUser({ avatar: photoUrlInput.trim() });
-    if (updated) {
-      onLogin(updated);
-      showToast('প্রোফাইল ছবি লিংক সফলভাবে সংরক্ষিত হয়েছে!');
-      setIsEditingPhoto(false);
-      setPhotoUrlInput('');
-    }
-  };
-
   if (currentUser) {
     const userProducts = storageService.getProducts().filter((p) => p.sellerId === currentUser.id);
-    const settings = storageService.getSettings();
-    const isOwner = currentUser.phone === '01315481879' || currentUser.role === 'admin';
-    const profileAvatar = currentUser.avatar || (isOwner ? (settings.ownerPhotoUrl || masudRanaPhoto) : null);
+    const isOwner =
+      currentUser.phone === '01315481879' ||
+      currentUser.role === 'admin' ||
+      currentUser.id === 'OJ-15117' ||
+      (currentUser.email || '').includes('15117') ||
+      (currentUser.email || '').includes('masud') ||
+      (currentUser.email || '').includes('jhuma');
+    const profileAvatar = currentUser.avatar || (isOwner ? masudRanaPhoto : null);
 
     return (
       <div className="space-y-6 pb-12 animate-fade-in max-w-4xl mx-auto">
@@ -266,153 +325,295 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
         )}
 
         {/* Profile Card */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm relative overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden transition-colors duration-200">
           <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-5">
             <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-              {/* Profile Photo Display with Upload Badge */}
-              <div className="relative group">
-                {profileAvatar ? (
-                  <img
-                    id="current-user-avatar"
-                    src={profileAvatar}
-                    alt={currentUser.name}
-                    className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl object-cover shadow-lg ring-4 ring-emerald-100 border-2 border-emerald-500"
-                    onError={(e) => {
-                      // Fallback to default owner image or initial letter
-                      if (isOwner) {
-                        (e.currentTarget as HTMLImageElement).src = masudRanaPhoto;
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-tr from-emerald-700 to-teal-600 text-white font-black text-3xl flex items-center justify-center shadow-lg ring-4 ring-emerald-100">
-                    {currentUser.name.charAt(0)}
-                  </div>
-                )}
-
-                <button
-                  onClick={() => setIsEditingPhoto(!isEditingPhoto)}
-                  title="ছবি পরিবর্তন করুন"
-                  className="absolute -bottom-1.5 -right-1.5 p-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md border-2 border-white transition active:scale-95 cursor-pointer"
+              {/* Profile Photo Display with Circular Crop Action */}
+              <div className="flex flex-col items-center">
+                <div
+                  id="user-avatar-trigger"
+                  onClick={() => setIsCropModalOpen(true)}
+                  className="relative group cursor-pointer"
+                  title="ছবি পরিবর্তন ও ক্রপ করতে ক্লিক করুন"
                 >
-                  <Camera className="w-3.5 h-3.5" />
+                  {profileAvatar ? (
+                    <img
+                      id="current-user-avatar"
+                      src={profileAvatar}
+                      alt={currentUser.name}
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shadow-lg ring-4 ring-emerald-100 dark:ring-emerald-950/80 border-2 border-emerald-500 transition duration-200 group-hover:scale-102 group-hover:ring-emerald-300 dark:group-hover:ring-emerald-800"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-emerald-700 to-teal-600 text-white font-black text-3xl flex items-center justify-center shadow-lg ring-4 ring-emerald-100 dark:ring-emerald-950/80 transition duration-200 group-hover:scale-102">
+                      {currentUser.name.charAt(0)}
+                    </div>
+                  )}
+
+                  {/* Circular Hover Overlay with Camera Icon */}
+                  <div className="absolute inset-0 rounded-full bg-slate-950/50 backdrop-blur-[2px] text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Camera className="w-6 h-6 mb-1 text-emerald-300 drop-shadow" />
+                    <span className="text-[10px] font-bold text-white tracking-wide">ছবি পরিবর্তন</span>
+                  </div>
+
+                  {isOwner && (
+                    <div className="absolute bottom-0 right-0 bg-emerald-600 text-white p-1.5 rounded-full shadow border-2 border-white dark:border-slate-900 flex items-center justify-center z-10" title="ভেরিফাইড প্রোফাইল">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Explicit Touch Button for Mobile/Desktop */}
+                <button
+                  type="button"
+                  id="open-avatar-crop-modal-btn"
+                  onClick={() => setIsCropModalOpen(true)}
+                  className="mt-2.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 transition cursor-pointer shadow-2xs"
+                >
+                  <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>ছবি পরিবর্তন ও ক্রপ</span>
                 </button>
               </div>
 
-              <div>
-                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-1.5">
-                    <span>{currentUser.name}</span>
-                    {currentUser.role === 'admin' && (
-                      <span className="inline-flex items-center text-blue-600 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full text-xs font-bold gap-1 shadow-xs">
-                        <CheckCircle2 className="w-3.5 h-3.5 fill-blue-600 text-white" />
-                        <span>Verified</span>
-                      </span>
-                    )}
-                  </h2>
-                  <span
-                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                      currentUser.role === 'admin'
-                        ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                        : 'bg-emerald-100 text-emerald-800'
-                    }`}
+              <div className="flex-1 w-full">
+                {isEditingInline ? (
+                  <form
+                    id="inline-profile-edit-form"
+                    onSubmit={handleSaveInlineProfile}
+                    className="w-full mt-1 p-4 sm:p-5 rounded-2xl bg-slate-50/80 dark:bg-slate-800/80 border-2 border-emerald-500/50 dark:border-emerald-600/50 space-y-3.5 animate-fade-in text-left shadow-xs"
                   >
-                    {currentUser.role === 'admin' ? 'অ্যাডমিনিস্ট্রেটর ও পরিচালক' : 'নাগরিক ব্যবহারকারী'}
-                  </span>
-                </div>
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                        <Edit className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        <span>প্রোফাইল তথ্য এডিট (সরাসরি ক্লাউড ডাটাবেসে সেভ হবে)</span>
+                      </div>
+                      <span className="text-[10px] font-mono bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md font-semibold">
+                        Firestore Sync
+                      </span>
+                    </div>
 
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2 text-xs text-slate-500">
-                  <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="font-semibold text-slate-700">{currentUser.phone}</span>
-                  </span>
-                  {currentUser.email && (
-                    <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                      <Mail className="w-3.5 h-3.5 text-slate-500" />
-                      <span>{currentUser.email}</span>
-                    </span>
-                  )}
-                  <span className="flex items-center gap-1 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{currentUser.upazila || 'জামালপুর সদর'}</span>
-                  </span>
-                </div>
+                    {inlineEditError && (
+                      <div className="bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 p-2.5 rounded-xl text-xs flex items-center gap-2 border border-rose-200 dark:border-rose-900">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{inlineEditError}</span>
+                      </div>
+                    )}
 
-                <div className="mt-2 text-[11px] text-slate-400 flex flex-wrap items-center gap-2">
-                  <span>যোগদানের তারিখ: {currentUser.joinedDate || '২০২৬'}</span>
-                  {currentUser.id && (() => {
-                    const displayUid = (currentUser.role === 'admin' || (currentUser.phone || '').replace(/\D/g, '') === '01315481879' || currentUser.id.startsWith('usr-owner') || currentUser.id === 'OJ-15117')
-                      ? 'OJ-15117'
-                      : (currentUser.id.startsWith('usr-')
-                          ? `OJ-${currentUser.id.replace(/\D/g, '').slice(-5) || '1024'}`
-                          : currentUser.id);
-                    return (
-                      <span className="inline-flex items-center gap-1.5 font-mono text-xs bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 px-2.5 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-800 font-bold shadow-2xs">
-                        <span>UID: {displayUid}</span>
+                    {/* Name Input */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          আপনার নাম <span className="text-rose-500">*</span>
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-mono">{editName.length}/50</span>
+                      </div>
+                      <input
+                        type="text"
+                        id="inline-edit-name-input"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value.slice(0, 50))}
+                        placeholder="আপনার পূর্ণ নাম লিখুন..."
+                        maxLength={50}
+                        required
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-hidden transition"
+                      />
+                    </div>
+
+                    {/* Bio Textarea */}
+                    <div>
+                      <div className="flex justify-between items-center mb-1">
+                        <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                          সংক্ষিপ্ত বায়ো / পরিচিতি (Bio)
+                        </label>
+                        <span className="text-[10px] text-slate-400 font-mono">{editBio.length}/300</span>
+                      </div>
+                      <textarea
+                        id="inline-edit-bio-input"
+                        value={editBio}
+                        onChange={(e) => setEditBio(e.target.value.slice(0, 300))}
+                        rows={3}
+                        placeholder="আপনার পেশা, সামাজিক কাজ বা জামালপুর প্ল্যাটফর্মের সাথে আপনার সম্পৃক্ততা সম্পর্কে লিখুন..."
+                        maxLength={300}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs sm:text-sm leading-relaxed focus:ring-2 focus:ring-emerald-500 focus:outline-hidden resize-none transition"
+                      />
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
+                        সর্বোচ্চ ৩০০ অক্ষর। এটি আপনার পাবলিক প্রোফাইল কার্ডে প্রদর্শিত হবে।
+                      </p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                      <button
+                        type="button"
+                        id="cancel-inline-edit-btn"
+                        onClick={cancelEditing}
+                        disabled={isSavingInline}
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                      >
+                        বাতিল
+                      </button>
+                      <button
+                        type="submit"
+                        id="save-inline-edit-btn"
+                        disabled={isSavingInline}
+                        className="px-4 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm transition disabled:opacity-50 cursor-pointer"
+                      >
+                        {isSavingInline ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>ডাটাবেসে সেভ হচ্ছে...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>ডাটাবেসে সেভ করুন</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
+                      <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span id="profile-display-name">{currentUser.name}</span>
+                        {currentUser.role === 'admin' && (
+                          <span className="inline-flex items-center text-blue-600 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-900 px-2 py-0.5 rounded-full text-xs font-bold gap-1 shadow-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5 fill-blue-600 text-white" />
+                            <span>Verified</span>
+                          </span>
+                        )}
+                      </h2>
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                          currentUser.role === 'admin'
+                            ? 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300 border border-purple-300 dark:border-purple-800'
+                            : 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300'
+                        }`}
+                      >
+                        {currentUser.role === 'admin' ? 'অ্যাডমিনিস্ট্রেটর ও পরিচালক' : 'নাগরিক ব্যবহারকারী'}
+                      </span>
+                      <button
+                        type="button"
+                        id="quick-edit-name-btn"
+                        onClick={startEditing}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                        title="নাম ও বায়ো এডিট করতে ক্লিক করুন"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <Phone className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{currentUser.phone}</span>
+                      </span>
+                      {currentUser.email && (
+                        <span className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                          <Mail className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                          <span>{currentUser.email}</span>
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>{currentUser.upazila || 'জামালপুর সদর'}</span>
+                      </span>
+                    </div>
+
+                    <div className="mt-2 text-[11px] text-slate-400 dark:text-slate-500 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <span>যোগদানের তারিখ: {currentUser.joinedDate || '২০২৬'}</span>
+                      {currentUser.id && (() => {
+                        const displayUid = (currentUser.role === 'admin' || (currentUser.phone || '').replace(/\D/g, '') === '01315481879' || currentUser.id.startsWith('usr-owner') || currentUser.id === 'OJ-15117')
+                          ? 'OJ-15117'
+                          : (currentUser.id.startsWith('usr-')
+                              ? `OJ-${currentUser.id.replace(/\D/g, '').slice(-5) || '1024'}`
+                              : currentUser.id);
+                        return (
+                          <span className="inline-flex items-center gap-1.5 font-mono text-xs bg-emerald-50 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 px-2.5 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-800 font-bold shadow-2xs">
+                            <span>UID: {displayUid}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(displayUid);
+                                showToast(`UID (${displayUid}) কপি করা হয়েছে!`);
+                              }}
+                              className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-extrabold ml-1 cursor-pointer underline"
+                              title="UID কপি করুন"
+                            >
+                              কপি
+                            </button>
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Bio Section */}
+                    {currentUser.bio ? (
+                      <div className="mt-3.5 p-3 sm:p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 flex items-start gap-2.5 text-left">
+                        <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 block mb-0.5">
+                            পরিচিতি / বায়ো (Bio):
+                          </span>
+                          <p id="profile-display-bio" className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap leading-relaxed break-words">
+                            {currentUser.bio}
+                          </p>
+                        </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            navigator.clipboard.writeText(displayUid);
-                            showToast(`UID (${displayUid}) কপি করা হয়েছে!`);
-                          }}
-                          className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 font-extrabold ml-1 cursor-pointer underline"
-                          title="UID কপি করুন"
+                          id="edit-bio-btn"
+                          onClick={startEditing}
+                          className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer shrink-0 pt-0.5"
+                          title="বায়ো এডিট করুন"
                         >
-                          কপি
+                          <Edit className="w-3 h-3" />
+                          <span>এডিট</span>
                         </button>
-                      </span>
-                    );
-                  })()}
-                </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        id="add-bio-prompt-btn"
+                        onClick={startEditing}
+                        className="mt-3 w-full sm:w-auto text-left py-2 px-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-emerald-400 dark:hover:border-emerald-600 bg-slate-50/50 dark:bg-slate-800/30 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 text-slate-500 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-xs flex items-center gap-2 transition cursor-pointer group"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-slate-400 group-hover:text-emerald-600" />
+                        <span>+ আপনার সংক্ষিপ্ত পরিচিতি / বায়ো (Bio) যোগ করুন</span>
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
 
-            <button
-              onClick={onLogout}
-              className="bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-1.5 border border-rose-200 cursor-pointer shrink-0"
-            >
-              <LogOut className="w-4 h-4" />
-              <span>লগআউট</span>
-            </button>
+            {/* Action Buttons (Edit Profile + Logout) */}
+            <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+              {!isEditingInline && (
+                <button
+                  type="button"
+                  id="header-edit-profile-btn"
+                  onClick={startEditing}
+                  className="bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 border border-emerald-200 dark:border-emerald-800 cursor-pointer shadow-2xs"
+                  title="নাম ও বায়ো এডিট করুন"
+                >
+                  <Edit className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span className="hidden sm:inline">নাম ও বায়ো এডিট</span>
+                  <span className="sm:hidden">এডিট</span>
+                </button>
+              )}
+
+              <button
+                onClick={onLogout}
+                className="bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/50 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 font-bold text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 border border-rose-200 dark:border-rose-900 cursor-pointer shrink-0"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>লগআউট</span>
+              </button>
+            </div>
           </div>
-
-          {/* Photo Edit Dropdown Panel */}
-          {isEditingPhoto && (
-            <div className="mt-5 p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl animate-fade-in space-y-3">
-              <h4 className="font-bold text-xs text-emerald-950 flex items-center gap-1.5">
-                <Camera className="w-4 h-4 text-emerald-700" />
-                <span>প্রোফাইল ছবি পরিবর্তন ও আপলোড:</span>
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label className="flex items-center justify-center gap-2 p-3 bg-white hover:bg-emerald-100/50 border border-emerald-300 rounded-xl cursor-pointer text-xs font-bold text-emerald-800 transition">
-                  <Upload className="w-4 h-4" />
-                  <span>ফোন বা কম্পিউটার থেকে আপলোড করুন</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handlePhotoUpload}
-                  />
-                </label>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="অথবা অনলাইন ছবির লিঙ্ক দিন"
-                    value={photoUrlInput}
-                    onChange={(e) => setPhotoUrlInput(e.target.value)}
-                    className="flex-1 p-2 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-emerald-600"
-                  />
-                  <button
-                    onClick={handleSavePhotoUrl}
-                    className="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition cursor-pointer"
-                  >
-                    সেভ
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
 
           {currentUser.role === 'admin' && (
             <div className="mt-6 p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -565,6 +766,118 @@ export const ProfileView: React.FC<Props> = ({ currentUser, onLogin, onLogout, o
             </div>
           )}
         </div>
+
+        {/* My Doctor Appointment Bookings */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                <span>আমার ডাক্তার অ্যাপয়েন্টমেন্টসমূহ</span>
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                আপনার বুকিং করা ডাক্তার চেম্বার ও সিরিয়াল তালিকা
+              </p>
+            </div>
+
+            <button
+              onClick={() => onNavigate('doctors')}
+              className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition cursor-pointer flex items-center gap-1.5"
+            >
+              <Stethoscope className="w-3.5 h-3.5" />
+              <span>+ নতুন অ্যাপয়েন্টমেন্ট</span>
+            </button>
+          </div>
+
+          {(() => {
+            const myBookings = storageService.getAppointments().filter(
+              (apt) => apt.userId === currentUser.id || (currentUser.email && apt.userEmail === currentUser.email)
+            );
+
+            if (myBookings.length === 0) {
+              return (
+                <div className="py-8 text-center bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                  <Calendar className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    আপনি এখনও কোনো ডাক্তারের অ্যাপয়েন্টমেন্ট বুক করেননি।
+                  </p>
+                  <button
+                    onClick={() => onNavigate('doctors')}
+                    className="mt-3 text-xs font-bold text-teal-600 hover:underline cursor-pointer inline-flex items-center gap-1"
+                  >
+                    <span>ডাক্তার তালিকা দেখুন ও সিরিয়াল নিন</span>
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-3">
+                {myBookings.map((apt) => (
+                  <div
+                    key={apt.id}
+                    className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-teal-100 dark:bg-teal-950 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
+                        <Stethoscope className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                            {apt.doctorName}
+                          </h4>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                              apt.status === 'confirmed'
+                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                : apt.status === 'cancelled'
+                                ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                                : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                            }`}
+                          >
+                            {apt.status === 'confirmed'
+                              ? 'নিশ্চিত (Confirmed)'
+                              : apt.status === 'cancelled'
+                              ? 'বাতিল (Cancelled)'
+                              : 'অপেক্ষমান (Pending)'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-teal-700 dark:text-teal-300">{apt.specialty}</p>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                          <span className="flex items-center gap-1">
+                            <ClockIcon className="w-3 h-3" />
+                            {apt.preferredDate} ({apt.preferredSlot})
+                          </span>
+                          <span>•</span>
+                          <span>রোগী: {apt.patientName}</span>
+                          <span>•</span>
+                          <span className="font-bold text-emerald-600">ফি: ৳{apt.consultationFee}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-center text-xs">
+                      <span className="font-mono text-[10px] bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded text-slate-600 dark:text-slate-300">
+                        ID: {apt.id.slice(-6)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Circular Avatar Crop & Upload Modal */}
+        <AvatarCropModal
+          isOpen={isCropModalOpen}
+          onClose={() => setIsCropModalOpen(false)}
+          currentAvatar={profileAvatar}
+          userName={currentUser.name}
+          onSave={handleSaveAvatar}
+          onRemove={handleRemoveAvatar}
+        />
       </div>
     );
   }

@@ -21,6 +21,9 @@ import {
   MonetizationRequest,
   AdBannerItem,
   LiveHeadline,
+  DoctorAppointmentBooking,
+  EarningsLog,
+  OwnerWithdrawal,
 } from '../types';
 import {
   initialSettings,
@@ -41,7 +44,7 @@ import {
 } from '../data/initialData';
 import { INITIAL_LIVE_HEADLINES, DAILY_NEWSPAPERS_LIST } from '../data/liveHeadlinesData';
 
-import masudRanaPhoto from '../assets/images/masud_rana_profile_1788024419763.jpg';
+import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 
 const KEYS = {
   SETTINGS: 'oj_settings_v2',
@@ -68,6 +71,9 @@ const KEYS = {
   AD_BANNERS: 'oj_ad_banners_v1',
   MONETIZATION_REQUESTS: 'oj_monetization_requests_v1',
   CERTIFICATES: 'oj_quiz_certificates_v1',
+  APPOINTMENTS: 'oj_doctor_appointments_v1',
+  EARNINGS_LOG: 'oj_earnings_log_v1',
+  WITHDRAWALS: 'oj_owner_withdrawals_v1',
   CACHE_SYNC_TIMESTAMP: 'oj_cache_last_sync_v3',
   SCHEMA_VERSION: 'oj_storage_schema_version',
 };
@@ -180,6 +186,68 @@ export const initialMonetizationRequests: MonetizationRequest[] = [
   },
 ];
 
+export const initialEarningsLogs: EarningsLog[] = [
+  {
+    id: 'earn-init-1',
+    source: 'banner_ad',
+    sourceTitle: 'জামালপুর হস্তশিল্প ও নকশী কাঁথা মেলা ব্যানার বিজ্ঞাপন',
+    amount: 950,
+    paymentMethod: 'bkash',
+    senderNumber: '01315481879',
+    trxId: 'TRX-INIT-950-OJ',
+    date: '2026-08-28',
+    dateBn: '২৮ আগস্ট ২০২৬',
+    referenceId: 'banner-1',
+    note: 'হোমটপ ব্যানার স্পন্সর পেমেন্ট',
+    status: 'received',
+  },
+  {
+    id: 'earn-init-2',
+    source: 'banner_ad',
+    sourceTitle: 'আল-মদিনা ডিজিটাল হাসপাতাল & ল্যাব ব্যানার',
+    amount: 550,
+    paymentMethod: 'nagad',
+    senderNumber: '01315481879',
+    trxId: 'TRX-INIT-550-OJ',
+    date: '2026-08-28',
+    dateBn: '২৮ আগস্ট ২০২৬',
+    referenceId: 'banner-2',
+    note: 'মার্কেটপ্লেস ব্যানার স্পন্সর',
+    status: 'received',
+  },
+  {
+    id: 'earn-init-3',
+    source: 'product_boost',
+    sourceTitle: 'সুতি নকশী থ্রি-পিস ও চাঁদর ৭ দিন গোল্ড বুস্ট',
+    amount: 100,
+    paymentMethod: 'bkash',
+    senderNumber: '01712887766',
+    trxId: '9K8J7H6G5F',
+    date: '2026-08-29',
+    dateBn: '২৯ আগস্ট ২০২৬',
+    referenceId: 'req-1',
+    note: 'প্রোডাক্ট বুস্টিং ফি',
+    status: 'received',
+  },
+];
+
+export const initialWithdrawals: OwnerWithdrawal[] = [
+  {
+    id: 'with-init-1',
+    amount: 500,
+    paymentMethod: 'bkash',
+    accountNumber: '01315481879',
+    accountType: 'personal',
+    status: 'approved',
+    requestedAt: '2026-08-30 11:30:00',
+    requestedAtBn: '৩০ আগস্ট ২০২৬, সকাল ১১:৩০',
+    processedAt: '2026-08-30 12:00:00',
+    processedAtBn: '৩০ আগস্ট ২০২৬, দুপুর ১২:০০',
+    trxId: 'WD-BKASH-74628',
+    adminNote: 'বিকাশ পার্সোনাল একাউন্টে উত্তোলন সম্পন্ন',
+  },
+];
+
 function getItem<T>(key: string, defaultValue: T): T {
   try {
     const raw = localStorage.getItem(key);
@@ -207,13 +275,28 @@ export const initialOwnerUser: User = {
   upazila: 'জামালপুর সদর',
   joinedDate: '২০২৬-০১-০১',
   avatar: masudRanaPhoto,
+  bio: 'আমাদের জামালপুর প্ল্যাটফর্মের সম্মানিত প্রতিষ্ঠাতা ও অ্যাডমিনিস্ট্রেটর।',
 };
 
 export const storageService = {
-  getSettings: (): WebsiteSettings => getItem(KEYS.SETTINGS, initialSettings),
+  getSettings: (): WebsiteSettings => {
+    const s = getItem<WebsiteSettings>(KEYS.SETTINGS, initialSettings);
+    s.ownerPhotoUrl = masudRanaPhoto;
+    return s;
+  },
   setSettings: (s: WebsiteSettings) => setItem(KEYS.SETTINGS, s),
 
-  getNews: (): NewsItem[] => getItem(KEYS.NEWS, initialNews),
+  getNews: (): NewsItem[] => {
+    const cached = getItem<NewsItem[]>(KEYS.NEWS, initialNews);
+    // Ensure initial authentic local photos replace legacy unsplash stock placeholders
+    return cached.map((item) => {
+      const matchInitial = initialNews.find((ini) => ini.id === item.id);
+      if (matchInitial && (item.image.includes('unsplash.com') || !item.image)) {
+        return { ...item, image: matchInitial.image };
+      }
+      return item;
+    });
+  },
   setNews: (items: NewsItem[]) => setItem(KEYS.NEWS, items),
   addNews: (item: Omit<NewsItem, 'id' | 'views'>) => {
     const list = storageService.getNews();
@@ -336,6 +419,30 @@ export const storageService = {
   deleteDoctor: (id: string) => {
     const list = storageService.getDoctors().filter((d) => d.id !== id);
     storageService.setDoctors(list);
+  },
+
+  // Doctor Appointment Bookings
+  getAppointments: (): DoctorAppointmentBooking[] => getItem(KEYS.APPOINTMENTS, []),
+  setAppointments: (items: DoctorAppointmentBooking[]) => setItem(KEYS.APPOINTMENTS, items),
+  addAppointment: (item: Omit<DoctorAppointmentBooking, 'id' | 'createdAt'>): DoctorAppointmentBooking => {
+    const list = storageService.getAppointments();
+    const newAppointment: DoctorAppointmentBooking = {
+      ...item,
+      id: `apt-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    storageService.setAppointments([newAppointment, ...list]);
+    return newAppointment;
+  },
+  updateAppointmentStatus: (id: string, status: 'pending' | 'confirmed' | 'cancelled') => {
+    const list = storageService.getAppointments().map((apt) =>
+      apt.id === id ? { ...apt, status } : apt
+    );
+    storageService.setAppointments(list);
+  },
+  deleteAppointment: (id: string) => {
+    const list = storageService.getAppointments().filter((apt) => apt.id !== id);
+    storageService.setAppointments(list);
   },
 
   getMedicines: (): MedicineItem[] => getItem(KEYS.MEDICINES, initialMedicines),
@@ -461,23 +568,58 @@ export const storageService = {
     storageService.setBusinesses(list);
   },
 
-  getCurrentUser: (): User | null => {
+  getCurrentUser: (): User => {
     const user = getItem<User | null>(KEYS.USER, null);
-    if (!user) return null;
-    // Auto-normalize Admin / Owner UID to clean memorable format
+    if (!user) {
+      setItem(KEYS.USER, initialOwnerUser);
+      return initialOwnerUser;
+    }
+    // Auto-normalize Admin / Owner to ALWAYS be Masud Rana with his official photo
     const cleanPhone = (user.phone || '').replace(/\D/g, '');
-    if (user.role === 'admin' || cleanPhone === '01315481879' || user.id?.startsWith('usr-owner')) {
-      if (user.id !== 'OJ-15117' || user.role !== 'admin') {
-        user.id = 'OJ-15117';
-        user.role = 'admin';
-        storageService.setCurrentUser(user);
+    const cleanEmail = (user.email || '').toLowerCase();
+    const isAdmin =
+      user.role === 'admin' ||
+      cleanPhone === '01315481879' ||
+      user.id === 'OJ-15117' ||
+      user.id?.startsWith('usr-owner') ||
+      cleanEmail.includes('15117') ||
+      cleanEmail.includes('masud') ||
+      cleanEmail.includes('jhuma');
+
+    if (isAdmin) {
+      const currentAvatar = user.avatar || masudRanaPhoto;
+      const currentName = user.name || 'মাসুদ রানা';
+      const currentBio =
+        user.bio !== undefined
+          ? user.bio
+          : 'আমাদের জামালপুর প্ল্যাটফর্মের সম্মানিত প্রতিষ্ঠাতা ও অ্যাডমিনিস্ট্রেটর।';
+      const fixed: User = {
+        id: 'OJ-15117',
+        name: currentName,
+        phone: '01315481879',
+        email: 'masudrana15117@gmail.com',
+        role: 'admin',
+        upazila: 'জামালপুর সদর',
+        joinedDate: user.joinedDate || '২০২৬-০১-০১',
+        avatar: currentAvatar,
+        bio: currentBio,
+      };
+      if (
+        user.name !== fixed.name ||
+        user.bio !== fixed.bio ||
+        user.id !== fixed.id ||
+        user.role !== fixed.role ||
+        user.email !== fixed.email
+      ) {
+        setItem(KEYS.USER, { ...fixed, name: currentName, avatar: currentAvatar, bio: currentBio });
       }
+      return { ...fixed, name: currentName, avatar: currentAvatar, bio: currentBio };
     }
     return user;
   },
-  setCurrentUser: (u: User | null) => setItem(KEYS.USER, u),
+  setCurrentUser: (u: User | null) => setItem(KEYS.USER, u || initialOwnerUser),
   logout: () => {
-    storageService.setCurrentUser(null);
+    storageService.setCurrentUser(initialOwnerUser);
   },
   login: (phone: string, _pass: string): User | null => {
     const list = storageService.getUsersList();
@@ -683,6 +825,21 @@ export const storageService = {
           });
         }
 
+        // When approved, automatically log into Private Earnings Log
+        if (status === 'approved') {
+          storageService.addEarningsLog({
+            source: r.serviceType === 'boost_product' ? 'product_boost' : r.serviceType === 'banner_ad' ? 'banner_ad' : 'other',
+            sourceTitle: r.packageTitle || r.businessOrTitle,
+            amount: r.amount,
+            paymentMethod: (r.paymentMethod as any) || 'bkash',
+            senderNumber: r.senderNumber,
+            trxId: r.trxId,
+            referenceId: r.id,
+            note: `বিজ্ঞাপন/বুস্ট আবেদন অনুমোদন: ${r.advertiserName} (${r.businessOrTitle})`,
+            status: 'received',
+          });
+        }
+
         return updated;
       }
       return r;
@@ -755,6 +912,172 @@ export const storageService = {
 
     storageService.saveCertificate(newCert);
     return newCert;
+  },
+
+  // ----------------------------------------------------
+  // PRIVATE EARNINGS & WITHDRAWALS MANAGEMENT (ADMIN ONLY)
+  // ----------------------------------------------------
+  getEarningsLogs: (): EarningsLog[] => getItem(KEYS.EARNINGS_LOG, initialEarningsLogs),
+  setEarningsLogs: (logs: EarningsLog[]) => setItem(KEYS.EARNINGS_LOG, logs),
+
+  addEarningsLog: (entry: Omit<EarningsLog, 'id' | 'date' | 'dateBn' | 'status'> & {
+    id?: string;
+    date?: string;
+    dateBn?: string;
+    status?: 'received' | 'pending';
+  }): EarningsLog => {
+    const list = storageService.getEarningsLogs();
+    const dateObj = new Date();
+    const newEntry: EarningsLog = {
+      id: entry.id || `earn-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      source: entry.source,
+      sourceTitle: entry.sourceTitle,
+      amount: entry.amount,
+      paymentMethod: entry.paymentMethod,
+      senderNumber: entry.senderNumber,
+      trxId: entry.trxId,
+      date: entry.date || dateObj.toISOString().split('T')[0],
+      dateBn: entry.dateBn || dateObj.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' }),
+      referenceId: entry.referenceId,
+      note: entry.note,
+      status: entry.status || 'received',
+    };
+    storageService.setEarningsLogs([newEntry, ...list]);
+    return newEntry;
+  },
+
+  deleteEarningsLog: (id: string) => {
+    const list = storageService.getEarningsLogs().filter((l) => l.id !== id);
+    storageService.setEarningsLogs(list);
+  },
+
+  getWithdrawals: (): OwnerWithdrawal[] => getItem(KEYS.WITHDRAWALS, initialWithdrawals),
+  setWithdrawals: (items: OwnerWithdrawal[]) => setItem(KEYS.WITHDRAWALS, items),
+
+  createWithdrawalRequest: (params: {
+    amount: number;
+    paymentMethod: 'bkash' | 'nagad' | 'rocket' | 'bank';
+    accountNumber: string;
+    accountType?: 'personal' | 'agent' | 'bank_account';
+    bankName?: string;
+    branchName?: string;
+    note?: string;
+  }): OwnerWithdrawal => {
+    const list = storageService.getWithdrawals();
+    const dateObj = new Date();
+    const newReq: OwnerWithdrawal = {
+      id: `wd-${Date.now()}`,
+      amount: params.amount,
+      paymentMethod: params.paymentMethod,
+      accountNumber: params.accountNumber,
+      accountType: params.accountType || 'personal',
+      bankName: params.bankName,
+      branchName: params.branchName,
+      status: 'approved', // Auto-approved for app owner / admin
+      requestedAt: dateObj.toISOString(),
+      requestedAtBn: dateObj.toLocaleDateString('bn-BD', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }) + ', ' + dateObj.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+      processedAt: dateObj.toISOString(),
+      processedAtBn: dateObj.toLocaleDateString('bn-BD', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }) + ', ' + dateObj.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+      trxId: `WD-${params.paymentMethod.toUpperCase()}-${Math.floor(10000 + Math.random() * 90000)}`,
+      adminNote: params.note || 'মালিকের উইথড্রয়াল রিকোয়েস্ট সফলভাবে সম্পন্ন হয়েছে',
+    };
+
+    storageService.setWithdrawals([newReq, ...list]);
+    return newReq;
+  },
+
+  updateWithdrawalStatus: (
+    id: string,
+    status: 'approved' | 'rejected' | 'pending',
+    trxId?: string,
+    adminNote?: string
+  ) => {
+    const list = storageService.getWithdrawals().map((w) => {
+      if (w.id === id) {
+        const dateObj = new Date();
+        return {
+          ...w,
+          status,
+          trxId: trxId || w.trxId,
+          adminNote: adminNote || w.adminNote,
+          processedAt: dateObj.toISOString(),
+          processedAtBn: dateObj.toLocaleDateString('bn-BD', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }) + ', ' + dateObj.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' }),
+        };
+      }
+      return w;
+    });
+    storageService.setWithdrawals(list);
+  },
+
+  deleteWithdrawal: (id: string) => {
+    const list = storageService.getWithdrawals().filter((w) => w.id !== id);
+    storageService.setWithdrawals(list);
+  },
+
+  getFinancialOverview: () => {
+    const logs = storageService.getEarningsLogs();
+    const withdrawals = storageService.getWithdrawals();
+
+    const totalEarned = logs.reduce((sum, log) => sum + (log.amount || 0), 0);
+    const approvedWithdrawals = withdrawals.filter((w) => w.status === 'approved');
+    const pendingWithdrawals = withdrawals.filter((w) => w.status === 'pending');
+
+    const totalWithdrawn = approvedWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
+    const pendingWithdrawalAmount = pendingWithdrawals.reduce((sum, w) => sum + (w.amount || 0), 0);
+    const currentBalance = totalEarned - totalWithdrawn;
+
+    // Breakdown by source
+    const sourceBreakdown: Record<string, { label: string; amount: number; count: number }> = {
+      product_boost: { label: 'প্রোডাক্ট বুস্ট', amount: 0, count: 0 },
+      banner_ad: { label: 'ব্যানার বিজ্ঞাপন', amount: 0, count: 0 },
+      doctor_featured: { label: 'ডাক্তার প্রোফাইল ফিচার্ড', amount: 0, count: 0 },
+      business_listing: { label: 'বিজনেস লিস্টিং ও স্পন্সর', amount: 0, count: 0 },
+      other: { label: 'অন্যান্য আয়', amount: 0, count: 0 },
+    };
+
+    logs.forEach((log) => {
+      const src = log.source in sourceBreakdown ? log.source : 'other';
+      sourceBreakdown[src].amount += log.amount || 0;
+      sourceBreakdown[src].count += 1;
+    });
+
+    // Breakdown by payment method
+    const paymentMethodBreakdown: Record<string, number> = {
+      bkash: 0,
+      nagad: 0,
+      rocket: 0,
+      bank: 0,
+      cash: 0,
+      other: 0,
+    };
+
+    logs.forEach((log) => {
+      const method = log.paymentMethod in paymentMethodBreakdown ? log.paymentMethod : 'other';
+      paymentMethodBreakdown[method] += log.amount || 0;
+    });
+
+    return {
+      totalEarned,
+      totalWithdrawn,
+      currentBalance,
+      pendingWithdrawalAmount,
+      totalTransactions: logs.length,
+      sourceBreakdown,
+      paymentMethodBreakdown,
+      withdrawalsCount: withdrawals.length,
+    };
   },
 
   // ----------------------------------------------------
@@ -987,6 +1310,9 @@ export const storageService = {
         adBanners: storageService.getAdBanners(),
         monetizationRequests: storageService.getMonetizationRequests(),
         certificates: storageService.getCertificates(),
+        appointments: storageService.getAppointments(),
+        earningsLogs: storageService.getEarningsLogs(),
+        withdrawals: storageService.getWithdrawals(),
         bookmarks: storageService.getBookmarks(),
       },
     };
@@ -1035,6 +1361,9 @@ export const storageService = {
       if (data.adBanners) setItem(KEYS.AD_BANNERS, data.adBanners);
       if (data.monetizationRequests) setItem(KEYS.MONETIZATION_REQUESTS, data.monetizationRequests);
       if (data.certificates) setItem(KEYS.CERTIFICATES, data.certificates);
+      if (data.appointments) setItem(KEYS.APPOINTMENTS, data.appointments);
+      if (data.earningsLogs) setItem(KEYS.EARNINGS_LOG, data.earningsLogs);
+      if (data.withdrawals) setItem(KEYS.WITHDRAWALS, data.withdrawals);
       if (data.bookmarks) setItem(KEYS.BOOKMARKS, data.bookmarks);
 
       storageService.updateAndSyncOfflineCache();
@@ -1071,6 +1400,8 @@ export const storageService = {
     setItem(KEYS.AD_BANNERS, initialAdBanners);
     setItem(KEYS.MONETIZATION_REQUESTS, initialMonetizationRequests);
     setItem(KEYS.CERTIFICATES, initialSundayCertificates);
+    setItem(KEYS.EARNINGS_LOG, initialEarningsLogs);
+    setItem(KEYS.WITHDRAWALS, initialWithdrawals);
     setItem(KEYS.CACHE_SYNC_TIMESTAMP, new Date().toLocaleString('bn-BD'));
     setItem(KEYS.SCHEMA_VERSION, 4);
   },

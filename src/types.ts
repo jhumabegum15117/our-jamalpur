@@ -34,6 +34,9 @@ export type TabType =
   | 'contact'
   | 'about'
   | 'admin'
+  | 'admin-earnings'
+  | 'admin-earnings-history'
+  | 'admin-balance'
   | 'profile'
   | 'ads-pricing'
   | 'export-zip';
@@ -47,6 +50,7 @@ export interface User {
   upazila: Upazila;
   joinedDate: string;
   avatar?: string;
+  bio?: string;
 }
 
 export type NewsCategory =
@@ -464,6 +468,79 @@ export interface AdBannerItem {
   amountPaid: number;
   status: 'active' | 'inactive';
   expiresAt: string;
+}
+
+export interface DoctorAppointmentBooking {
+  id: string;
+  doctorId: string;
+  doctorName: string;
+  specialty: string;
+  hospitalOrChamber: string;
+  patientName: string;
+  patientPhone: string;
+  patientAge?: string;
+  patientGender?: 'পুরুষ' | 'মহিলা' | 'অন্যান্য';
+  preferredDate: string;
+  preferredSlot: string;
+  symptoms?: string;
+  userId: string;
+  userEmail?: string;
+  status: 'pending' | 'confirmed' | 'cancelled';
+  consultationFee: number;
+  createdAt: string;
+}
+
+export type EarningsSource =
+  | 'মার্কেটপ্লেস_কমিশন'
+  | 'বিজ্ঞাপন_রাজস্ব'
+  | 'বোনাস'
+  | 'product_boost'
+  | 'banner_ad'
+  | 'doctor_featured'
+  | 'business_listing'
+  | 'other';
+
+export interface EarningsLog {
+  id: string;
+  amount: number;
+  source: EarningsSource | string;
+  sourceTitle?: string;
+  description?: string;
+  paymentMethod?: string;
+  senderNumber?: string;
+  trxId?: string;
+  date?: string;
+  dateBn?: string;
+  createdAt?: string;
+  recordedBy?: string;
+  referenceId?: string;
+  note?: string;
+  status?: 'received' | 'pending';
+}
+
+export type WithdrawalMethod = 'বিকাশ' | 'নগদ' | 'রকেট' | 'ব্যাংক ট্রান্সফার' | 'bkash' | 'nagad' | 'rocket' | 'bank';
+export type WithdrawalStatus = 'pending' | 'approved' | 'rejected';
+
+export interface OwnerWithdrawal {
+  id: string;
+  amount: number;
+  paymentMethod?: 'bkash' | 'nagad' | 'rocket' | 'bank' | string;
+  method?: WithdrawalMethod;
+  accountNumber: string;
+  accountType?: 'personal' | 'agent' | 'bank_account';
+  bankName?: string;
+  branchName?: string;
+  status: WithdrawalStatus;
+  notes?: string;
+  note?: string;
+  adminNote?: string;
+  requestedAt?: string;
+  requestedAtBn?: string;
+  processedAt?: string;
+  processedAtBn?: string;
+  createdAt?: string;
+  approvedAt?: string;
+  trxId?: string;
 }
 
 

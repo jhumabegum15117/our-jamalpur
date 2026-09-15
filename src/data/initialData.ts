@@ -17,6 +17,14 @@ import {
   EmergencyContact,
   MfsProvider,
 } from '../types';
+import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
+import treePlantingImg from '../assets/images/jamalpur_tree_planting_1789219407698.jpg';
+import islampurSeedsImg from '../assets/images/islampur_farmers_seeds_1789219420647.jpg';
+import melandahKanthaImg from '../assets/images/melandah_nakshi_kantha_1789219432531.jpg';
+import jfclPlantImg from '../assets/images/jfcl_sarishabari_plant_1789219446069.jpg';
+import dewanjSugarImg from '../assets/images/dewanganj_sugarcane_1789219460585.jpg';
+import lauchapraImg from '../assets/images/lauchapra_garo_hills_1789219475936.jpg';
+import madarganjSchoolImg from '../assets/images/madarganj_school_fair_1789219489457.jpg';
 
 export const initialSettings: WebsiteSettings = {
   siteName: 'Our Jamalpur',
@@ -32,7 +40,7 @@ export const initialSettings: WebsiteSettings = {
   contactEmail: 'masudrana15117@gmail.com',
   facebookProfile: 'https://www.facebook.com/masudrana15117',
   facebookPage: 'https://www.facebook.com/profile.php?id=61583998314277',
-  ownerPhotoUrl: '',
+  ownerPhotoUrl: masudRanaPhoto,
   adSenseEnabled: true,
   maintenanceMode: false,
   productionUrl: 'https://ourjamalpur15117.web.app',
@@ -225,7 +233,7 @@ export const initialNews: NewsItem[] = [
     title: 'জামালপুর শহরের ব্রহ্মপুত্র নদের পাড়ে বৃক্ষরোপণ ও পরিবেশ সুরক্ষা উৎসব শুরু',
     summary: 'পরিবেশ সুরক্ষায় জামালপুর পৌরসভা ও জেলা প্রশাসনের উদ্যোগে সপ্তাহব্যাপী বৃক্ষরোপণ কর্মসূচির উদ্বোধন করা হয়েছে।',
     content: 'জামালপুর জেলা শহরকে সবুজ ও মনোরম রাখতে ব্রহ্মপুত্র নদের পুরাতন ফেরিঘাট সংলগ্ন এলাকায় সপ্তাহব্যাপী বৃক্ষরোপণ ও পরিবেশ উৎসব শুরু হয়েছে। জেলা প্রশাসক ও পুলিশ সুপার অনুষ্ঠানে উপস্থিত থেকে বিভিন্ন প্রজাতির ফলজ ও বনজ গাছের চারা রোপণ করেন। স্থানীয় পরিবেশবাদী সংগঠন ও স্কুল-কলেজের শিক্ষার্থীরা এই উদ্যোগে স্বতঃস্ফূর্তভাবে অংশগ্রহণ করছে।',
-    image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+    image: treePlantingImg,
     category: 'সদর',
     location: 'জামালপুর সদর',
     date: '২০২৬-০৮-২৯',
@@ -238,7 +246,7 @@ export const initialNews: NewsItem[] = [
     title: 'ইসলামপুরে চরাঞ্চলের কৃষকদের মাঝে উন্নত জাতের বীজ ও কৃষি সরঞ্জাম বিতরণ',
     summary: 'যমুনা ও ব্রহ্মপুত্র চরাঞ্চলের ৫০০ জন প্রান্তিক কৃষকের মাঝে বিনামূল্যে সার ও বীজ বিতরণ সম্পন্ন।',
     content: 'ইসলামপুর উপজেলা কৃষি সম্প্রসারণ অধিদপ্তরের সহযোগিতায় চরাঞ্চলের কৃষকদের আধুনিক চাষাবাদে উৎসাহিত করতে বিনামূল্যে উচ্চফলনশীল ধানের বীজ ও সার বিতরণ করা হয়েছে। এতে চরাঞ্চলের বন্যাপীড়িত কৃষকরা উপকৃত হবেন বলে জানিয়েছেন সংশ্লিষ্ট কৃষি কর্মকর্তা।',
-    image: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80',
+    image: islampurSeedsImg,
     category: 'ইসলামপুর',
     location: 'ইসলামপুর',
     date: '২০২৬-০৮-২৮',
@@ -251,7 +259,7 @@ export const initialNews: NewsItem[] = [
     title: 'মেলান্দহে ঐতিহ্যবাহী নকশী কাঁথা ও হস্তশিল্পীদের বিশেষ সম্মাননা ও প্রদর্শনী',
     summary: 'জামালপুরের খ্যাতিমান হস্তশিল্পকে আন্তর্জাতিক বাজারে পরিচিত করতে মেলান্দহ উপজেলায় তিন দিনব্যাপী মেলা শুরু।',
     content: 'জামালপুরের বিখ্যাত নকশী কাঁথা তৈরি করে জীবিকা নির্বাহকারী স্থানীয় নারী কারিগরদের কাজের স্বীকৃতিস্বরূপ মেলান্দহ অডিটোরিয়ামে বিশেষ প্রদর্শনী আয়োজন করা হয়। প্রদর্শনীতে উপজেলার বিভিন্ন ইউনিয়নের হস্তশিল্পীরা তাদের নিপুণ কাজ উপস্থাপন করেন।',
-    image: 'https://images.unsplash.com/photo-1606744888344-493238955de9?auto=format&fit=crop&w=800&q=80',
+    image: melandahKanthaImg,
     category: 'মেলান্দহ',
     location: 'মেলান্দহ',
     date: '২০২৬-০৮-২৭',
@@ -264,7 +272,7 @@ export const initialNews: NewsItem[] = [
     title: 'সরিষাবাড়ী যমুনা সার কারখানা এলাকায় নিরাপত্তা জোরদার ও উৎপাদন বৃদ্ধি',
     summary: 'দেশের অন্যতম বৃহৎ সার উৎপাদনকারী প্রতিষ্ঠান যমুনা সার কারখানা (JFCL) পূর্ণ শক্তিতে উৎপাদন পরিচালনা করছে।',
     content: 'সরিষাবাড়ীর তারাকান্দিতে অবস্থিত যমুনা সার কারখানা লিমিটেডে নিরবচ্ছিন্ন গ্যাস সরবরাহের মাধ্যমে ইউরিয়া সারের উৎপাদন লক্ষ্যমাত্রার চেয়ে বৃদ্ধি পেয়েছে। চলতি মৌসুমে উত্তরাঞ্চলের কৃষকদের জন্য পর্যাপ্ত সার সরবরাহের নিশ্চয়তা দিয়েছে কারখানা কর্তৃপক্ষ।',
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80',
+    image: jfclPlantImg,
     category: 'সরিষাবাড়ী',
     location: 'সরিষাবাড়ী',
     date: '২০২৬-০৮-২৬',
@@ -277,7 +285,7 @@ export const initialNews: NewsItem[] = [
     title: 'দেওয়ানগঞ্জ চিনিকল অঞ্চলে আখ চাষিদের জন্য বিশেষ ঋণ ও প্রণোদনা প্যাকেজ ঘোষণা',
     summary: 'আখ চাষে কৃষকদের আগ্রহ ফিরিয়ে আনতে নতুন সহায়তা কর্মসূচি হাতে নিয়েছে চিনিকল কর্তৃপক্ষ।',
     content: 'দেওয়ানগঞ্জ চিনিকল এলাকায় আখ চাষিদের সুবিধার্থে সহজ শর্তে ঋণ ও সার বিতরণ কর্মসূচি উদ্বোধন করা হয়েছে। উপজেলা চেয়ারম্যান ও উপজেলা নির্বাহী কর্মকর্তা যৌথভাবে কার্যক্রমের উদ্বোধন করেন।',
-    image: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=800&q=80',
+    image: dewanjSugarImg,
     category: 'দেওয়ানগঞ্জ',
     location: 'দেওয়ানগঞ্জ',
     date: '২০২৬-০৮-২৫',
@@ -290,7 +298,7 @@ export const initialNews: NewsItem[] = [
     title: 'বকশীগঞ্জ গারো পাহাড় সীমান্তে পর্যটন বিকাশে বিশেষ উদ্যোগ গ্রহণ',
     summary: 'লাউচাপড়া ও গারো পাহাড়ের প্রাকৃতিক সৌন্দর্য উপভোগে পর্যটকদের জন্য বিশ্রামাগার ও নিরাপত্তা বাড়ানো হচ্ছে।',
     content: 'বকশীগঞ্জের ঐতিহ্যবাহী লাউচাপড়া অবকাশ কেন্দ্রে জেলা প্রশাসনের উদ্যোগে নতুন ওয়াকওয়ে ও পর্যটক বিশ্রামাগার নির্মাণ কাজ দ্রুত এগিয়ে চলছে। ফলে দর্শনার্থীদের আগমন বহুগুণ বৃদ্ধি পাবে।',
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80',
+    image: lauchapraImg,
     category: 'বকশীগঞ্জ',
     location: 'বকশীগঞ্জ',
     date: '২০২৬-০৮-২৪',
@@ -303,7 +311,7 @@ export const initialNews: NewsItem[] = [
     title: 'মাদারগঞ্জ আধুনিক মডেল স্কুল ও কলেজে বার্ষিক বিজ্ঞান মেলার সমাপনী',
     summary: 'তরুণ শিক্ষার্থীদের উদ্ভাবনী প্রজেক্ট প্রদর্শনীতে ৫০টি দল অংশগ্রহণ করেছে।',
     content: 'মাদারগঞ্জ উপজেলার বিভিন্ন শিক্ষাপ্রতিষ্ঠানের শিক্ষার্থীদের অংশগ্রহণে দুই দিনব্যাপী বিজ্ঞান মেলা ও কুইজ প্রতিযোগিতার পুরস্কার বিতরণ অনুষ্ঠিত হয়েছে। এতে সৌরবিদ্যুৎ ও রোবোটিক্স মডেলগুলো সবার নজর কাড়ে।',
-    image: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
+    image: madarganjSchoolImg,
     category: 'শিক্ষা',
     location: 'মাদারগঞ্জ',
     date: '২০২৬-০৮-২৩',

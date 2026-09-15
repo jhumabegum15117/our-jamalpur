@@ -27,12 +27,14 @@ import {
 } from 'lucide-react';
 import { NewsItem, LiveHeadline } from '../types';
 import { storageService } from '../services/storageService';
+import { Send, Plus } from 'lucide-react';
 
 interface Props {
   selectedNews?: NewsItem | null;
+  initialOpenCitizenNews?: boolean;
 }
 
-export const NewsView: React.FC<Props> = ({ selectedNews: initialNews }) => {
+export const NewsView: React.FC<Props> = ({ selectedNews: initialNews, initialOpenCitizenNews = false }) => {
   const [newsList, setNewsList] = useState<NewsItem[]>(storageService.getNews());
   const [liveHeadlines, setLiveHeadlines] = useState<LiveHeadline[]>(storageService.getLiveHeadlines());
   const dailyNewspapers = storageService.getDailyNewspapers();
@@ -44,6 +46,56 @@ export const NewsView: React.FC<Props> = ({ selectedNews: initialNews }) => {
   const [copied, setCopied] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg' | 'xl'>('base');
+
+  // Citizen News Modal
+  const [isCitizenNewsOpen, setIsCitizenNewsOpen] = useState(initialOpenCitizenNews);
+  const [reporterName, setReporterName] = useState('');
+  const [reporterPhone, setReporterPhone] = useState('');
+  const [citizenTitle, setCitizenTitle] = useState('');
+  const [citizenCategory, setCitizenCategory] = useState('সদর');
+  const [citizenDetails, setCitizenDetails] = useState('');
+  const [citizenToast, setCitizenToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialNews) {
+      setActiveArticle(initialNews);
+    }
+  }, [initialNews]);
+
+  useEffect(() => {
+    if (initialOpenCitizenNews) {
+      setIsCitizenNewsOpen(true);
+    }
+  }, [initialOpenCitizenNews]);
+
+  const handleSubmitCitizenNews = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!citizenTitle.trim() || !citizenDetails.trim()) return;
+
+    const newArticle: NewsItem = {
+      id: `citizen-news-${Date.now()}`,
+      title: citizenTitle.trim(),
+      summary: citizenDetails.trim().substring(0, 120) + '...',
+      content: citizenDetails.trim(),
+      image: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80',
+      category: citizenCategory,
+      location: citizenCategory === 'জাতীয়' ? 'ঢাকা' : `জামালপুর (${citizenCategory})`,
+      date: 'এইমাত্র প্রকাশিত',
+      author: reporterName.trim() || 'সাধারণ নাগরিক',
+      views: 1,
+      source: `নাগরিক প্রতিবেদক (${reporterPhone.trim()})`,
+    };
+
+    storageService.addNews(newArticle);
+    setNewsList(storageService.getNews());
+    setIsCitizenNewsOpen(false);
+    setCitizenTitle('');
+    setCitizenDetails('');
+    setReporterName('');
+    setReporterPhone('');
+    setCitizenToast('আপনার সংবাদ সফলভাবে প্রকাশিত হয়েছে!');
+    setTimeout(() => setCitizenToast(null), 4000);
+  };
 
   const categories = [
     { id: 'all', label: 'সব খবর' },
@@ -155,8 +207,26 @@ export const NewsView: React.FC<Props> = ({ selectedNews: initialNews }) => {
           <p className="text-xs sm:text-sm text-blue-200 mt-2 leading-relaxed">
             দৈনিক প্রথম আলো, বিডি প্রতিদিন, দ্য ডেইলি স্টার, ইত্তেফাক সহ শীর্ষ জাতীয় দৈনিকের সংবাদ এবং জামালপুর জেলার প্রতিটি প্রান্তের তাজা খবর।
           </p>
+
+          <button
+            id="citizen-news-submit-btn"
+            onClick={() => setIsCitizenNewsOpen(true)}
+            className="mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-md cursor-pointer transition w-fit border border-blue-400/30"
+          >
+            <Send className="w-4 h-4 text-blue-200" />
+            <span>নাগরিক সংবাদ বা তথ্য পাঠান</span>
+          </button>
         </div>
       </div>
+
+      {citizenToast && (
+        <div className="bg-emerald-600 text-white p-3.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-between shadow-lg animate-fade-in">
+          <span>{citizenToast}</span>
+          <button onClick={() => setCitizenToast(null)} className="p-1 hover:bg-emerald-700 rounded-lg">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Daily Newspapers Headlines Section */}
       <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
@@ -353,6 +423,8 @@ export const NewsView: React.FC<Props> = ({ selectedNews: initialNews }) => {
                     src={item.image}
                     alt={item.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
                   />
                   <span className="absolute top-3 left-3 bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-xs">
                     {item.category}
@@ -504,6 +576,7 @@ export const NewsView: React.FC<Props> = ({ selectedNews: initialNews }) => {
                 src={activeArticle.image}
                 alt={activeArticle.title}
                 className="w-full h-full object-cover opacity-90"
+                referrerPolicy="no-referrer"
               />
               <div className="absolute top-3 right-3 flex items-center gap-2">
                 <button
@@ -623,6 +696,111 @@ export const NewsView: React.FC<Props> = ({ selectedNews: initialNews }) => {
                 বন্ধ করুন
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Citizen News Submission Modal */}
+      {isCitizenNewsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh]">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-blue-900 to-indigo-900 text-white flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-base">নাগরিক সংবাদ বা তথ্য পাঠান</h3>
+                <p className="text-xs text-blue-200">জামালপুর জেলার যেকোনো ঘটনা বা জনস্বার্থের খবর প্রকাশ করুন</p>
+              </div>
+              <button
+                onClick={() => setIsCitizenNewsOpen(false)}
+                className="p-1.5 text-blue-200 hover:text-white rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitCitizenNews} className="p-5 space-y-3.5 text-xs sm:text-sm overflow-y-auto">
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">আপনার নাম *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="আপনার পূর্ণ নাম"
+                  value={reporterName}
+                  onChange={(e) => setReporterName(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">মোবাইল নম্বর *</label>
+                <input
+                  type="tel"
+                  required
+                  placeholder="017xxxxxxxx"
+                  value={reporterPhone}
+                  onChange={(e) => setReporterPhone(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">উপজেলা / এলাকা</label>
+                <select
+                  value={citizenCategory}
+                  onChange={(e) => setCitizenCategory(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="সদর">জামালপুর সদর</option>
+                  <option value="ইসলামপুর">ইসলামপুর</option>
+                  <option value="মেলান্দহ">মেলান্দহ</option>
+                  <option value="দেওয়ানগঞ্জ">দেওয়ানগঞ্জ</option>
+                  <option value="মাদারগঞ্জ">মাদারগঞ্জ</option>
+                  <option value="সরিষাবাড়ী">সরিষাবাড়ী</option>
+                  <option value="বকশীগঞ্জ">বকশীগঞ্জ</option>
+                  <option value="জাতীয়">জাতীয় খবর</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">সংবাদের শিরোনাম *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="সংবাদের মূল শিরোনাম লিখুন"
+                  value={citizenTitle}
+                  onChange={(e) => setCitizenTitle(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 dark:text-slate-200 mb-1">ঘটনার বিস্তারিত বিবরণ *</label>
+                <textarea
+                  rows={4}
+                  required
+                  placeholder="ঘটনা কখন, কোথায় এবং কীভাবে ঘটেছে তার বিস্তারিত বিবরণ লিখুন..."
+                  value={citizenDetails}
+                  onChange={(e) => setCitizenDetails(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-blue-500"
+                ></textarea>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCitizenNewsOpen(false)}
+                  className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl font-semibold cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-md cursor-pointer transition flex items-center gap-1.5"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>সংবাদ জমা দিন</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

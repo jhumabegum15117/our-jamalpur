@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   PlusCircle,
@@ -33,6 +33,7 @@ import {
   RefreshCw,
   Sparkles,
   LogOut,
+  MoreHorizontal,
 } from 'lucide-react';
 import { TabType, User as UserType, Upazila } from '../types';
 import { ThemeToggle } from './ThemeToggle';
@@ -70,11 +71,22 @@ export const Navbar: React.FC<Props> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServicesDropdownOpen, setIsServicesDropdownOpen] = useState(false);
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const isAdmin = isUserAdmin(currentUser);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setIsMoreMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const mainNavLinks: Array<{ id: TabType; label: string; icon: any }> = [
     { id: 'home', label: 'হোম', icon: null },
-    { id: 'mfs-transfer', label: 'MFS আন্তঃ লেনদেন', icon: ArrowRightLeft },
     { id: 'marketplace', label: 'মার্কেটপ্লেস', icon: ShoppingBag },
     { id: 'news', label: 'স্থানীয় খবর', icon: Newspaper },
     { id: 'transport', label: 'বাস ও ট্রেন', icon: Bus },
@@ -177,65 +189,115 @@ export const Navbar: React.FC<Props> = ({
               <span className="xs:hidden">পোস্ট</span>
             </button>
 
-            {/* Install App Button */}
-            {onOpenInstallApp && (
+            {/* Admin Panel Link (Desktop only) */}
+            {isAdmin && (
               <button
-                id="install-app-navbar-btn"
-                onClick={onOpenInstallApp}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 hover:from-emerald-800 hover:to-teal-800 text-white font-extrabold text-xs px-3 py-2 rounded-xl shadow-xs border border-emerald-500/40 transition cursor-pointer"
-                title="Our Jamalpur মোবাইল অ্যাপ ইনস্টল করুন"
+                id="admin-nav-btn"
+                onClick={() => handleNavClick('admin')}
+                className="hidden md:flex items-center gap-1.5 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl border transition cursor-pointer shadow-2xs bg-purple-600 text-white border-purple-700 hover:bg-purple-700"
+                title="অ্যাডমিন ড্যাশবোর্ড"
               >
-                <Smartphone className="w-4 h-4 text-amber-300 stroke-[2.5]" />
-                <span className="hidden md:inline font-bold">অ্যাপ ইনস্টল</span>
-                <span className="md:hidden font-bold">অ্যাপ</span>
+                <Shield className="w-3.5 h-3.5 text-amber-300 stroke-[2.5]" />
+                <span>অ্যাডমিন ড্যাশবোর্ড</span>
               </button>
             )}
 
-            {/* Live Feature Update Button */}
-            {onOpenAppUpdate && (
+            {/* Quick Actions 'আরও' (More) Dropdown: App Install, Live Updates, Cache & Admin ZIP */}
+            <div className="relative" ref={moreMenuRef}>
               <button
-                id="navbar-update-features-btn"
-                onClick={onOpenAppUpdate}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-slate-950 font-black text-xs px-2.5 sm:px-3.5 py-2 rounded-xl shadow-xs border border-emerald-300/80 transition cursor-pointer active:scale-95"
-                title="নতুন কোনো ফিচার যোগ করা হলে এখানে ক্লিক করে তাৎক্ষণিক আপডেট আনুন"
+                id="navbar-more-dropdown-btn"
+                onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
+                className="hidden sm:flex items-center gap-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-2.5 py-2 rounded-xl text-xs font-bold cursor-pointer transition border border-slate-200 dark:border-slate-700"
+                title="আরও ফিচার ও সেটিংস"
               >
-                <RefreshCw className="w-3.5 h-3.5 text-slate-950 stroke-[2.5]" />
-                <span className="hidden xs:inline font-black">নতুন ফিচার আনুন</span>
-                <span className="xs:hidden font-black">আপডেট</span>
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <span className="hidden md:inline">আরও</span>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
               </button>
-            )}
 
-            {/* Spck / ZIP Download Button */}
-            <button
-              id="export-zip-btn"
-              onClick={onOpenExportZip}
-              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold text-xs px-2.5 sm:px-3 py-2 rounded-xl shadow-sm border border-amber-400 transition cursor-pointer"
-              title="সম্পূর্ণ প্রজেক্টের ZIP ডাউনলোড করুন (Spck Editor Ready)"
-            >
-              <Download className="w-4 h-4 text-slate-950 stroke-[2.5]" />
-              <span className="hidden sm:inline font-bold">ZIP</span>
-            </button>
+              {isMoreMenuOpen && (
+                <div className="absolute right-0 mt-1.5 w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 py-1.5 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="px-3 py-1.5 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                    কুইক অ্যাকশন ও টুলস
+                  </div>
+
+                  {onOpenInstallApp && (
+                    <button
+                      onClick={() => {
+                        onOpenInstallApp();
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-2.5 transition cursor-pointer"
+                    >
+                      <Smartphone className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <div>
+                        <div className="font-bold">মোবাইল অ্যাপ ইনস্টল</div>
+                        <div className="text-[10px] text-slate-400">অফলাইনে ব্যবহার করতে ইনস্টল করুন</div>
+                      </div>
+                    </button>
+                  )}
+
+                  {onOpenAppUpdate && (
+                    <button
+                      onClick={() => {
+                        onOpenAppUpdate();
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-2.5 transition cursor-pointer"
+                    >
+                      <RefreshCw className="w-4 h-4 text-amber-500 shrink-0" />
+                      <div>
+                        <div className="font-bold">নতুন ফিচার আনুন</div>
+                        <div className="text-[10px] text-slate-400">অ্যাপটির সর্বশেষ সংস্করণ সিঙ্ক করুন</div>
+                      </div>
+                    </button>
+                  )}
+
+                  {onOpenStorageCache && (
+                    <button
+                      onClick={() => {
+                        onOpenStorageCache();
+                        setIsMoreMenuOpen(false);
+                      }}
+                      className="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-300 flex items-center gap-2.5 transition cursor-pointer"
+                    >
+                      <HardDrive className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                      <div>
+                        <div className="font-bold">অফলাইন স্টোরেজ ও ক্যাশ</div>
+                        <div className="text-[10px] text-slate-400">লোকাল ডাটা স্পেস ও ব্যাকআপ</div>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* ZIP download: Only visible to admin users */}
+                  {isAdmin && onOpenExportZip && (
+                    <div className="border-t border-slate-100 dark:border-slate-800 mt-1 pt-1">
+                      <button
+                        onClick={() => {
+                          onOpenExportZip();
+                          setIsMoreMenuOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-2 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 flex items-center gap-2.5 transition cursor-pointer"
+                      >
+                        <Download className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <div>
+                          <div className="font-bold flex items-center gap-1.5">
+                            <span>প্রজেক্ট ZIP ফাইল</span>
+                            <span className="text-[9px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1 py-0.2 rounded font-mono">ADMIN</span>
+                          </div>
+                          <div className="text-[10px] text-slate-400">Spck Editor সোর্স কোড ডাউনলোড</div>
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Theme Toggle in Navbar */}
             <div className="hidden sm:block">
               <ThemeToggle variant="dropdown" />
             </div>
-
-            {/* Admin Panel Link */}
-            <button
-              id="admin-nav-btn"
-              onClick={() => handleNavClick('admin')}
-              className={`flex items-center gap-1.5 text-xs font-bold px-2.5 sm:px-3 py-2 rounded-xl border transition cursor-pointer shadow-2xs ${
-                isAdmin
-                  ? 'bg-purple-600 text-white border-purple-700 hover:bg-purple-700'
-                  : 'bg-purple-50 dark:bg-purple-950/60 hover:bg-purple-100 dark:hover:bg-purple-900/80 text-purple-900 dark:text-purple-200 border-purple-300 dark:border-purple-700'
-              }`}
-              title={isAdmin ? "অ্যাডমিন ড্যাশবোর্ড" : "অ্যাডমিন প্যানেল প্রবেশ"}
-            >
-              <Shield className={`w-3.5 h-3.5 ${isAdmin ? 'text-amber-300 stroke-[2.5]' : 'text-purple-600 dark:text-purple-400'}`} />
-              <span className="hidden sm:inline">{isAdmin ? 'অ্যাডমিন ড্যাশবোর্ড' : 'অ্যাডমিন'}</span>
-              <span className="sm:hidden">এডমিন</span>
-            </button>
 
             {/* User Profile / Login */}
             {currentUser ? (
@@ -246,8 +308,12 @@ export const Navbar: React.FC<Props> = ({
                   className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/70 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer"
                   title="প্রোফাইল দেখুন"
                 >
-                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold">
-                    {currentUser.name.charAt(0)}
+                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold overflow-hidden">
+                    {currentUser.avatar ? (
+                      <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      currentUser.name.charAt(0)
+                    )}
                   </div>
                   <span className="hidden sm:inline max-w-[90px] truncate">{currentUser.name}</span>
                 </button>
@@ -550,16 +616,19 @@ export const Navbar: React.FC<Props> = ({
                 <span>লগআউট ({currentUser.name})</span>
               </button>
             )}
-            <button
-              onClick={() => {
-                onOpenExportZip();
-                setIsMobileMenuOpen(false);
-              }}
-              className="w-full py-2 px-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Download className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-              <span>Spck Editor ZIP ডাউনলোড করুন</span>
-            </button>
+            {/* ZIP Export button restricted to Admins */}
+            {isAdmin && onOpenExportZip && (
+              <button
+                onClick={() => {
+                  onOpenExportZip();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full py-2 px-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Download className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span>Spck Editor ZIP ডাউনলোড (অ্যাডমিন)</span>
+              </button>
+            )}
           </div>
         </div>
       )}

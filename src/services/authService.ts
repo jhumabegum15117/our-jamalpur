@@ -10,7 +10,8 @@ import {
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { User, Upazila } from '../types';
-import { storageService } from './storageService';
+import { storageService, initialOwnerUser } from './storageService';
+import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 
 // Designated Super Admin Email Accounts
 export const ADMIN_EMAILS = [
@@ -300,19 +301,17 @@ export const authService = {
 
     // 1. Instant Master Admin Login Guard
     if (isMasterAdminId && isMasterPassword) {
-      const isJhuma = cleanLower.includes('jhuma');
-      const adminEmail = isJhuma
-        ? 'jhumabegum15117@gmail.com'
-        : (cleanLower.includes('@') ? cleanLower : 'masudrana15117@gmail.com');
+      const adminEmail = cleanLower.includes('@') ? cleanLower : 'masudrana15117@gmail.com';
 
       const masterUser: User = {
         id: 'OJ-15117',
-        name: isJhuma ? 'ঝুমা বেগম' : 'মাসুদ রানা',
+        name: 'মাসুদ রানা',
         phone: '01315481879',
         email: adminEmail,
         role: 'admin',
         upazila: 'জামালপুর সদর',
         joinedDate: '২০২৬-০১-০১',
+        avatar: masudRanaPhoto,
       };
 
       storageService.setCurrentUser(masterUser);
@@ -427,26 +426,73 @@ export const authService = {
       if (!fbUser) {
         // If not logged into Firebase, check if local storage user is admin or guest
         const local = storageService.getCurrentUser();
-        onChange(local);
+        onChange(local || initialOwnerUser);
         return;
       }
 
       const cleanEmail = (fbUser.email || '').toLowerCase();
-      let role: 'admin' | 'user' = ADMIN_EMAILS.includes(cleanEmail) ? 'admin' : 'user';
+      const isAdminAccount =
+        ADMIN_EMAILS.includes(cleanEmail) ||
+        cleanEmail.includes('15117') ||
+        cleanEmail.includes('masud') ||
+        cleanEmail.includes('jhuma');
+
+      if (isAdminAccount) {
+        let avatar = masudRanaPhoto;
+        let name = 'মাসুদ রানা';
+        let bio = 'আমাদের জামালপুর প্ল্যাটফর্মের সম্মানিত প্রতিষ্ঠাতা ও অ্যাডমিনিস্ট্রেটর।';
+        try {
+          const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.avatar) avatar = data.avatar;
+            if (data.name) name = data.name;
+            if (data.bio !== undefined) bio = data.bio;
+          } else {
+            const local = storageService.getCurrentUser();
+            if (local?.avatar) avatar = local.avatar;
+            if (local?.name) name = local.name;
+            if (local?.bio !== undefined) bio = local.bio;
+          }
+        } catch (e) {
+          const local = storageService.getCurrentUser();
+          if (local?.avatar) avatar = local.avatar;
+          if (local?.name) name = local.name;
+          if (local?.bio !== undefined) bio = local.bio;
+        }
+
+        const ownerUser: User = {
+          id: 'OJ-15117',
+          name,
+          phone: '01315481879',
+          email: 'masudrana15117@gmail.com',
+          role: 'admin',
+          upazila: 'জামালপুর সদর',
+          joinedDate: '২০২৬-০১-০১',
+          avatar,
+          bio,
+        };
+        storageService.setCurrentUser(ownerUser);
+        onChange(ownerUser);
+        return;
+      }
+
+      let role: 'admin' | 'user' = 'user';
       let upazila: Upazila = 'জামালপুর সদর';
       let phone = '';
       let name = fbUser.displayName || cleanEmail.split('@')[0] || 'নাগরিক';
+      let avatar: string | undefined = fbUser.photoURL || undefined;
+      let bio: string | undefined = undefined;
 
       try {
         const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
-          if (data.role === 'admin' || ADMIN_EMAILS.includes(cleanEmail)) {
-            role = 'admin';
-          }
           if (data.name) name = data.name;
           if (data.upazila) upazila = data.upazila as Upazila;
           if (data.phone) phone = data.phone;
+          if (data.avatar) avatar = data.avatar;
+          if (data.bio !== undefined) bio = data.bio;
         }
       } catch (e) {
         // Fallback gracefully
@@ -460,6 +506,8 @@ export const authService = {
         role,
         upazila,
         joinedDate: new Date().toLocaleDateString('bn-BD'),
+        avatar,
+        bio,
       };
 
       storageService.setCurrentUser(user);
@@ -468,20 +516,37 @@ export const authService = {
   },
 
   /**
-   * Update profile data
+   * Update profile data and save to Firestore & Local Storage
    */
-  async updateProfileData(userId: string, data: Partial<User>): Promise<void> {
+  async updateProfileData(userId: string, data: Partial<User>): Promise<User | null> {
     try {
       const userRef = doc(db, 'users', userId);
-      await updateDoc(userRef, {
-        ...(data.name ? { name: data.name } : {}),
-        ...(data.phone ? { phone: data.phone } : {}),
-        ...(data.upazila ? { upazila: data.upazila } : {}),
-        ...(data.avatar ? { avatar: data.avatar } : {}),
-      });
+      await setDoc(
+        userRef,
+        {
+          ...data,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      );
     } catch (err) {
       console.warn('Firestore updateProfile failed:', err);
     }
-    storageService.updateCurrentUser(data);
+
+    if (auth.currentUser) {
+      try {
+        const profileUpdates: { displayName?: string; photoURL?: string } = {};
+        if (data.name) profileUpdates.displayName = data.name;
+        if (data.avatar) profileUpdates.photoURL = data.avatar;
+        if (Object.keys(profileUpdates).length > 0) {
+          await updateProfile(auth.currentUser, profileUpdates);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    const updated = storageService.updateCurrentUser(data);
+    return updated;
   },
 };

@@ -1,18 +1,29 @@
-import React, { useState, useMemo } from 'react';
-import { Hospital, UserCheck, Phone, MapPin, Clock, Search, ShieldAlert, HeartPulse, Stethoscope, Award, Calendar } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Hospital, UserCheck, Phone, MapPin, Clock, Search, ShieldAlert, HeartPulse, Stethoscope, Award, Calendar, CheckCircle2 } from 'lucide-react';
 import { storageService } from '../services/storageService';
-import { HospitalItem, DoctorItem } from '../types';
+import { HospitalItem, DoctorItem, User as UserType, DoctorAppointmentBooking } from '../types';
+import { DoctorAppointmentModal } from './DoctorAppointmentModal';
 
 interface Props {
   defaultSubTab?: 'hospital' | 'doctors';
+  currentUser?: UserType | null;
+  onOpenAuth?: () => void;
 }
 
-export const HealthView: React.FC<Props> = ({ defaultSubTab = 'hospital' }) => {
+export const HealthView: React.FC<Props> = ({ defaultSubTab = 'hospital', currentUser = null, onOpenAuth }) => {
   const [activeTab, setActiveTab] = useState<'hospital' | 'doctors'>(defaultSubTab);
+
+  useEffect(() => {
+    if (defaultSubTab) {
+      setActiveTab(defaultSubTab);
+    }
+  }, [defaultSubTab]);
   const [hospitals, setHospitals] = useState<HospitalItem[]>(storageService.getHospitals());
   const [doctors, setDoctors] = useState<DoctorItem[]>(storageService.getDoctors());
   const [searchQuery, setSearchQuery] = useState('');
   const [specialtyFilter, setSpecialtyFilter] = useState('all');
+  const [selectedDoctorForBooking, setSelectedDoctorForBooking] = useState<DoctorItem | null>(null);
+  const [bookingToast, setBookingToast] = useState<string | null>(null);
 
   const specialties = [
     { id: 'all', label: 'সকল বিশেষজ্ঞ' },
@@ -234,20 +245,54 @@ export const HealthView: React.FC<Props> = ({ defaultSubTab = 'hospital' }) => {
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span className="text-xs text-slate-500">সিরিয়ালের জন্য:</span>
-                <a
-                  id={`call-doc-${doc.id}`}
-                  href={`tel:${doc.appointmentPhone.replace(/[^0-9]/g, '')}`}
-                  className="bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-2xs"
+              <div className="mt-4 pt-3 border-t border-slate-100 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500">সিরিয়াল বা কল:</span>
+                  <a
+                    id={`call-doc-${doc.id}`}
+                    href={`tel:${doc.appointmentPhone.replace(/[^0-9]/g, '')}`}
+                    className="text-teal-700 hover:text-teal-800 font-bold text-xs flex items-center gap-1.5 transition"
+                  >
+                    <Phone className="w-3.5 h-3.5" />
+                    <span>{doc.appointmentPhone}</span>
+                  </a>
+                </div>
+
+                <button
+                  type="button"
+                  id={`book-appointment-doc-${doc.id}`}
+                  onClick={() => setSelectedDoctorForBooking(doc)}
+                  className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold text-xs py-2 rounded-xl flex items-center justify-center gap-1.5 transition shadow-2xs cursor-pointer"
                 >
-                  <Phone className="w-3.5 h-3.5" />
-                  <span>{doc.appointmentPhone}</span>
-                </a>
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>অ্যাপয়েন্টমেন্ট নিন (Book Appointment)</span>
+                </button>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {/* Booking Success Toast Notification */}
+      {bookingToast && (
+        <div className="fixed bottom-6 right-6 z-50 bg-emerald-700 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 text-xs animate-fade-in border border-emerald-500">
+          <CheckCircle2 className="w-4 h-4 text-emerald-200 shrink-0" />
+          <span>{bookingToast}</span>
+        </div>
+      )}
+
+      {/* Doctor Appointment Booking Modal */}
+      {selectedDoctorForBooking && (
+        <DoctorAppointmentModal
+          doctor={selectedDoctorForBooking}
+          currentUser={currentUser}
+          onClose={() => setSelectedDoctorForBooking(null)}
+          onOpenAuth={onOpenAuth}
+          onSuccess={(booking) => {
+            setBookingToast(`ডাঃ ${booking.doctorName}-এর জন্য আপনার অ্যাপয়েন্টমেন্ট সফলভাবে সংরক্ষিত হয়েছে!`);
+            setTimeout(() => setBookingToast(null), 5000);
+          }}
+        />
       )}
     </div>
   );

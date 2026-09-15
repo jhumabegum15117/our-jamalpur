@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, MapPin, Send, CheckCircle2, ShieldCheck, Heart, Sparkles, Globe } from 'lucide-react';
 import { storageService } from '../services/storageService';
-import masudRanaPhoto from '../assets/images/masud_rana_profile_1788024419763.jpg';
+import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 
 export const AboutOwnerView: React.FC = () => {
   const settings = storageService.getSettings();
@@ -56,7 +56,7 @@ export const AboutOwnerView: React.FC = () => {
               <div className="relative shrink-0 group">
                 <img
                   id="owner-profile-photo"
-                  src={settings.ownerPhotoUrl || masudRanaPhoto}
+                  src={masudRanaPhoto}
                   alt={`${settings.ownerName} - উদ্যোক্তা ও প্রতিষ্ঠাতা`}
                   className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover shadow-xl ring-4 ring-emerald-100 border-2 border-emerald-500/80"
                   onError={(e) => {

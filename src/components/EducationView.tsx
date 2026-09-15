@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { BookOpen, Download, Search, FileText, Sparkles, ExternalLink, BookmarkCheck, Book } from 'lucide-react';
+import { BookOpen, Download, Search, FileText, Sparkles, ExternalLink, BookmarkCheck, Book, X, CheckCircle2 } from 'lucide-react';
 import { storageService } from '../services/storageService';
 import { EducationBook } from '../types';
 
@@ -7,6 +7,7 @@ export const EducationView: React.FC = () => {
   const [books, setBooks] = useState<EducationBook[]>(storageService.getBooks());
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPreviewBook, setSelectedPreviewBook] = useState<EducationBook | null>(null);
 
   const classes = [
     { id: 'all', label: 'সকল শ্রেণি' },
@@ -118,19 +119,98 @@ export const EducationView: React.FC = () => {
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
               <span className="text-xs text-slate-500">ই-বুক পিডিএফ</span>
-              <a
-                href={book.downloadUrl || book.pdfLink || '#'}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-2xs"
+              <button
+                type="button"
+                id={`read-book-btn-${book.id}`}
+                onClick={() => {
+                  if (book.downloadUrl && book.downloadUrl !== '#') {
+                    window.open(book.downloadUrl, '_blank');
+                  } else {
+                    setSelectedPreviewBook(book);
+                  }
+                }}
+                className="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition shadow-2xs cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
-                <span>বই পড়ুন / ডাউনলোড</span>
-              </a>
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>বই পড়ুন / বিবরণ</span>
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Book / Study Material Preview Modal */}
+      {selectedPreviewBook && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+            <div className="p-4 sm:p-5 bg-gradient-to-r from-sky-800 to-indigo-900 text-white flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/20 text-white">
+                  {selectedPreviewBook.classLevel || selectedPreviewBook.className || 'ই-বুক'}
+                </span>
+                <h3 className="font-bold text-base mt-1">{selectedPreviewBook.title}</h3>
+                <p className="text-xs text-sky-200">{selectedPreviewBook.subject}</p>
+              </div>
+              <button
+                onClick={() => setSelectedPreviewBook(null)}
+                className="p-1.5 text-sky-200 hover:text-white rounded-lg hover:bg-white/10 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              <div className="bg-sky-50 dark:bg-slate-800 p-3.5 rounded-2xl border border-sky-100 dark:border-slate-700 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span>বইয়ের ধরন:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{selectedPreviewBook.type || 'NCTB Approved'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>উৎস / প্যানেল:</span>
+                  <span className="font-bold text-sky-700 dark:text-sky-400">{selectedPreviewBook.officialSource || 'জাতীয় শিক্ষাক্রম ও পাঠ্যপুস্তক বোর্ড (NCTB)'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>ফাইল সাইজ:</span>
+                  <span className="font-bold text-emerald-600">{selectedPreviewBook.fileSize || '১০-১৫ MB (পিডিএফ)'}</span>
+                </div>
+              </div>
+
+              {selectedPreviewBook.description && (
+                <div>
+                  <h4 className="font-bold text-slate-800 dark:text-slate-200 mb-1">সংক্ষিপ্ত পরিচিতি:</h4>
+                  <p className="leading-relaxed bg-slate-50 dark:bg-slate-850 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                    {selectedPreviewBook.description}
+                  </p>
+                </div>
+              )}
+
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 text-emerald-800 dark:text-emerald-300 text-xs">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>NCTB ও শিক্ষা মন্ত্রণালয়ের উন্মুক্ত শিক্ষা পোর্টাল থেকে বিনামূল্যে অধ্যয়ন উপযোগী।</span>
+              </div>
+
+              <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPreviewBook(null)}
+                  className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-xl font-semibold cursor-pointer"
+                >
+                  বন্ধ করুন
+                </button>
+                <a
+                  href="https://nctb.gov.bd"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold shadow-md cursor-pointer transition flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>NCTB পোর্টালে পড়ুন</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

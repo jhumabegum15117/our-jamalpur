@@ -28,7 +28,7 @@ export const QuickActionModal: React.FC<Props> = ({
     {
       id: 'sell_product',
       tab: 'marketplace' as TabType,
-      openPostAd: true,
+      extra: { openPostAd: true },
       icon: ShoppingBag,
       title: 'পণ্য বা বিজ্ঞাপনের পোস্ট দিন',
       desc: 'মোবাইল, ইলেকট্রনিক্স, জমি, ফ্ল্যাট বা যেকোনো জিনিস বিক্রির বিজ্ঞাপন দিন',
@@ -39,7 +39,7 @@ export const QuickActionModal: React.FC<Props> = ({
     {
       id: 'blood_request',
       tab: 'blood-donor' as TabType,
-      openPostAd: false,
+      extra: { openRegister: true },
       icon: HeartHandshake,
       title: 'জরুরি রক্তের আবেদন জানান',
       desc: 'জামালপুরের যেকোনো রোগীর জন্য দ্রুত রক্তদাতা খুঁজতে জরুরি পোস্ট দিন',
@@ -50,7 +50,7 @@ export const QuickActionModal: React.FC<Props> = ({
     {
       id: 'citizen_news',
       tab: 'news' as TabType,
-      openPostAd: false,
+      extra: { openCitizenNews: true },
       icon: Newspaper,
       title: 'নাগরিক সংবাদ বা তথ্য দিন',
       desc: 'জামালপুর জেলার যেকোনো ঘটনা, দুর্ঘটনা বা জনস্বার্থের খবর সবার কাছে পৌঁছে দিন',
@@ -61,7 +61,7 @@ export const QuickActionModal: React.FC<Props> = ({
     {
       id: 'job_post',
       tab: 'jobs' as TabType,
-      openPostAd: false,
+      extra: { openPostJob: true },
       icon: Briefcase,
       title: 'চাকরি বা কাজের নিয়োগ বিজ্ঞপ্তি দিন',
       desc: 'আপনার দোকান, শোরুম বা প্রতিষ্ঠানে কর্মী নিয়োগের তথ্য প্রকাশ করুন',
@@ -108,7 +108,7 @@ export const QuickActionModal: React.FC<Props> = ({
                 type="button"
                 onClick={() => {
                   onClose();
-                  onSelectAction(act.tab, { openPostAd: act.openPostAd });
+                  onSelectAction(act.tab, act.extra);
                 }}
                 className="w-full text-left p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 bg-slate-50/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-800 transition duration-150 flex items-center gap-3.5 group cursor-pointer shadow-2xs hover:shadow-md"
               >
