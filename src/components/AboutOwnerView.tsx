@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, Mail, Phone, MapPin, Send, CheckCircle2, ShieldCheck, Heart, Sparkles, Globe } from 'lucide-react';
 import { storageService } from '../services/storageService';
+import masudReadyAvatarPhoto from '../assets/images/masud_ready_avatar_1789491002185.jpg';
 import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 
 export const AboutOwnerView: React.FC = () => {
@@ -56,12 +57,12 @@ export const AboutOwnerView: React.FC = () => {
               <div className="relative shrink-0 group">
                 <img
                   id="owner-profile-photo"
-                  src={masudRanaPhoto}
+                  src={settings.ownerPhotoUrl || masudReadyAvatarPhoto}
                   alt={`${settings.ownerName} - উদ্যোক্তা ও প্রতিষ্ঠাতা`}
                   className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover shadow-xl ring-4 ring-emerald-100 border-2 border-emerald-500/80"
                   onError={(e) => {
                     // Fallback to default asset if custom URL fails
-                    (e.currentTarget as HTMLImageElement).src = masudRanaPhoto;
+                    (e.currentTarget as HTMLImageElement).src = masudReadyAvatarPhoto;
                   }}
                 />
                 <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow border-2 border-white flex items-center gap-0.5">

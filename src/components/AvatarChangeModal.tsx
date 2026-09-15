@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react';
+import masudReadyAvatarPhoto from '../assets/images/masud_ready_avatar_1789491002185.jpg';
 import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 
 interface AvatarChangeModalProps {
@@ -23,8 +24,13 @@ interface AvatarChangeModalProps {
 
 const PRESET_AVATARS = [
   {
+    id: 'founder-smart-jacket',
+    label: 'মাসুদ রানা (স্মার্ট জ্যাকেট)',
+    url: masudReadyAvatarPhoto,
+  },
+  {
     id: 'founder-official',
-    label: 'প্রতিষ্ঠাতা (মাসুদ রানা)',
+    label: 'প্রতিষ্ঠাতা (অফিসিয়াল)',
     url: masudRanaPhoto,
   },
   {

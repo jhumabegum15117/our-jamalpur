@@ -44,6 +44,7 @@ import {
 } from '../data/initialData';
 import { INITIAL_LIVE_HEADLINES, DAILY_NEWSPAPERS_LIST } from '../data/liveHeadlinesData';
 
+import masudReadyAvatarPhoto from '../assets/images/masud_ready_avatar_1789491002185.jpg';
 import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 
 const KEYS = {
@@ -274,14 +275,14 @@ export const initialOwnerUser: User = {
   role: 'admin',
   upazila: 'জামালপুর সদর',
   joinedDate: '২০২৬-০১-০১',
-  avatar: masudRanaPhoto,
+  avatar: masudReadyAvatarPhoto,
   bio: 'আমাদের জামালপুর প্ল্যাটফর্মের সম্মানিত প্রতিষ্ঠাতা ও অ্যাডমিনিস্ট্রেটর।',
 };
 
 export const storageService = {
   getSettings: (): WebsiteSettings => {
     const s = getItem<WebsiteSettings>(KEYS.SETTINGS, initialSettings);
-    s.ownerPhotoUrl = masudRanaPhoto;
+    s.ownerPhotoUrl = masudReadyAvatarPhoto;
     return s;
   },
   setSettings: (s: WebsiteSettings) => setItem(KEYS.SETTINGS, s),
