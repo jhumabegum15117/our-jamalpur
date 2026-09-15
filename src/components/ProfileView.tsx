@@ -40,7 +40,8 @@ import { storageService } from '../services/storageService';
 import { authService, isUserAdmin } from '../services/authService';
 import masudRanaPhoto from '../assets/images/masud_rana_profile_fixed_1789395910368.jpg';
 import { ThemeToggle } from './ThemeToggle';
-import { AvatarCropModal } from './AvatarCropModal';
+import { AvatarChangeModal } from './AvatarChangeModal';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 
 interface Props {
   currentUser: UserType | null;
@@ -70,6 +71,7 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
 
   // Inline Profile Editing State
   const [isEditingInline, setIsEditingInline] = useState(false);
@@ -328,13 +330,13 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden transition-colors duration-200">
           <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-5">
             <div className="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
-              {/* Profile Photo Display with Circular Crop Action */}
+              {/* Profile Photo Display with Change Action */}
               <div className="flex flex-col items-center">
                 <div
                   id="user-avatar-trigger"
                   onClick={() => setIsCropModalOpen(true)}
                   className="relative group cursor-pointer"
-                  title="ছবি পরিবর্তন ও ক্রপ করতে ক্লিক করুন"
+                  title="ছবি পরিবর্তন করতে ক্লিক করুন"
                 >
                   {profileAvatar ? (
                     <img
@@ -368,12 +370,12 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
                 {/* Explicit Touch Button for Mobile/Desktop */}
                 <button
                   type="button"
-                  id="open-avatar-crop-modal-btn"
+                  id="open-avatar-change-modal-btn"
                   onClick={() => setIsCropModalOpen(true)}
                   className="mt-2.5 text-[11px] font-bold text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/80 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 transition cursor-pointer shadow-2xs"
                 >
                   <Camera className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>ছবি পরিবর্তন ও ক্রপ</span>
+                  <span>ছবি পরিবর্তন</span>
                 </button>
               </div>
 
@@ -869,8 +871,8 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
           })()}
         </div>
 
-        {/* Circular Avatar Crop & Upload Modal */}
-        <AvatarCropModal
+        {/* Avatar Change Modal (Simple Upload & Link without Crop) */}
+        <AvatarChangeModal
           isOpen={isCropModalOpen}
           onClose={() => setIsCropModalOpen(false)}
           currentAvatar={profileAvatar}
@@ -917,7 +919,7 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
             }`}
           >
             <Mail className="w-4 h-4" />
-            <span>ইমেইল ও পাসওয়ার্ড</span>
+            <span>আইডি ও পাসওয়ার্ড (এডমিন)</span>
           </button>
         </div>
 
@@ -1186,11 +1188,13 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
             )}
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">ইমেইল এড্রেস *</label>
+              <label className="block font-bold text-slate-700 mb-1">
+                {authMode === 'login' ? 'ইমেইল অথবা মোবাইল নম্বর / ইউজার আইডি *' : 'ইমেইল এড্রেস *'}
+              </label>
               <input
-                type="email"
+                type={authMode === 'login' ? 'text' : 'email'}
                 required
-                placeholder="example@mail.com"
+                placeholder={authMode === 'login' ? 'মোবাইল নম্বর (01315481879) বা ইমেইল' : 'example@mail.com'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:bg-white text-xs sm:text-sm"
@@ -1198,7 +1202,19 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
             </div>
 
             <div>
-              <label className="block font-bold text-slate-700 mb-1">পাসওয়ার্ড *</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-bold text-slate-700 dark:text-slate-300">পাসওয়ার্ড *</label>
+                {authMode === 'login' && (
+                  <button
+                    type="button"
+                    id="forgot-password-top-btn"
+                    onClick={() => setIsForgotPasswordOpen(true)}
+                    className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 hover:underline cursor-pointer transition"
+                  >
+                    পাসওয়ার্ড ভুলে গেছেন?
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -1218,6 +1234,18 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {authMode === 'login' && (
+                <div className="flex justify-end mt-1.5">
+                  <button
+                    type="button"
+                    id="forgot-password-link-btn"
+                    onClick={() => setIsForgotPasswordOpen(true)}
+                    className="text-[11px] text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 font-medium hover:underline cursor-pointer flex items-center gap-1 transition"
+                  >
+                    <span>🔑 পাসওয়ার্ড মনে নেই? রিসেট লিংক পাঠান</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             {authMode === 'register' && (
@@ -1278,6 +1306,14 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
             </button>
           </form>
         )}
+
+        {/* Forgot Password Modal */}
+        <ForgotPasswordModal
+          isOpen={isForgotPasswordOpen}
+          onClose={() => setIsForgotPasswordOpen(false)}
+          initialIdentifier={email}
+          onSuccessReturnToLogin={() => setIsForgotPasswordOpen(false)}
+        />
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ export const ADMIN_EMAILS = [
 
 // Master Admin Passwords accepted for instant verified admin access
 export const MASTER_ADMIN_PASSWORDS = [
+  'masudrana15117',
   '15117',
   'jamalpur15117',
   'admin15117',
@@ -398,12 +399,53 @@ export const authService = {
   /**
    * Send Password Reset Email via Firebase Auth
    */
-  async sendPasswordReset(email: string): Promise<void> {
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail) {
-      throw new Error('দয়া করে আপনার ইমেইল এড্রেস প্রদান করুন।');
+  async sendPasswordReset(identifier: string): Promise<string> {
+    const raw = identifier.trim();
+    if (!raw) {
+      throw new Error('দয়া করে আপনার নিবন্ধিত ইমেইল বা মোবাইল নম্বর প্রদান করুন।');
     }
-    await sendPasswordResetEmail(auth, cleanEmail);
+
+    let cleanEmail = raw.toLowerCase();
+    const cleanPhone = raw.replace(/\s+/g, '').replace(/^(\+88)/, '');
+
+    // Check if master admin / founder identifier
+    if (
+      cleanPhone === '01315481879' ||
+      cleanEmail === 'admin' ||
+      cleanEmail === 'masudrana' ||
+      cleanEmail === 'oj-15117' ||
+      cleanEmail === 'masudrana15117'
+    ) {
+      cleanEmail = 'masudrana15117@gmail.com';
+    } else if (!cleanEmail.includes('@')) {
+      // Find matching user by phone in local storage
+      const users = storageService.getUsersList();
+      const matched = users.find(
+        (u) => u.phone && u.phone.replace(/\D/g, '') === cleanPhone.replace(/\D/g, '')
+      );
+      if (matched && matched.email) {
+        cleanEmail = matched.email.toLowerCase();
+      } else {
+        throw new Error(
+          'এই মোবাইল নম্বরের সাথে কোনো নিবন্ধিত ইমেইল পাওয়া যায়নি। দয়া করে আপনার অ্যাকাউন্ট তৈরির ইমেইল এড্রেস লিখুন অথবা এডমিন সাপোর্টে (০১৩১৫৪৮১৮৭৯) যোগাযোগ করুন।'
+        );
+      }
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, cleanEmail);
+      return cleanEmail;
+    } catch (err: any) {
+      const code = err?.code || '';
+      if (code === 'auth/user-not-found') {
+        throw new Error(`(${cleanEmail}) এই ইমেইল দিয়ে কোনো একাউন্ট খুঁজে পাওয়া যায়নি। অনুগ্রহ করে সঠিক ইমেইল দিন।`);
+      } else if (code === 'auth/invalid-email') {
+        throw new Error('অনুগ্রহ করে একটি সঠিক ইমেইল এড্রেস প্রদান করুন।');
+      } else if (code === 'auth/too-many-requests') {
+        throw new Error('অতিরিক্ত বার অনুরোধ করা হয়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।');
+      }
+      throw new Error(err?.message || 'পাসওয়ার্ড রিসেট ইমেইল পাঠাতে ব্যর্থ হয়েছে। পুনরায় চেষ্টা করুন।');
+    }
   },
 
   /**
