@@ -13,11 +13,18 @@ try {
   console.warn('Initial storage auto-sync:', e);
 }
 
-// Ensure clean service worker state
+// Ensure clean service worker and browser cache storage state
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     for (const reg of registrations) {
       reg.unregister().catch(() => {});
+    }
+  }).catch(() => {});
+}
+if ('caches' in window) {
+  caches.keys().then((keys) => {
+    for (const key of keys) {
+      caches.delete(key).catch(() => {});
     }
   }).catch(() => {});
 }

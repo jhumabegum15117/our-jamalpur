@@ -648,6 +648,58 @@ export const ProfileView: React.FC<Props> = ({ currentUser: propUser, onLogin, o
           </div>
         </div>
 
+        {/* App Version & Live Update Info Card */}
+        <div className="bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 text-white rounded-3xl p-6 sm:p-8 border border-emerald-500/30 shadow-lg space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <Sparkles className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-extrabold text-lg sm:text-xl text-white">
+                    Our Jamalpur
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500 text-slate-950 font-mono">
+                    v4.5.0
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-200/80 mt-0.5">
+                  সর্বশেষ লাইভ ভার্সন: ১৫ সেপ্টেম্বর ২০২৬ | ফাস্ট ক্লাউড সিঙ্ক
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                id="force-reload-latest-version-btn"
+                onClick={async () => {
+                  showToast('ক্যাশ ক্লিয়ার হচ্ছে ও নতুন ভার্সন লোড হচ্ছে...');
+                  await storageService.forceFullAppUpdate();
+                  const freshUrl = storageService.generateShareableLatestUrl('profile-update');
+                  window.location.href = freshUrl;
+                }}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition cursor-pointer active:scale-95"
+              >
+                <RefreshCw className="w-4 h-4 stroke-[2.5]" />
+                <span>নতুন ভার্সন রিলোড করুন</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-xs space-y-1.5 text-slate-300 leading-relaxed">
+            <div className="font-bold text-amber-300 flex items-center gap-1.5">
+              <span>💡 নতুন আপডেট না আসলে করণীয়:</span>
+            </div>
+            <p className="text-[11px] text-slate-300">
+              ১. মোবাইল ব্রাউজারে পুরোনো ফাইল জমে থাকলে ওপরের <strong>"নতুন ভার্সন রিলোড করুন"</strong> বাটনে ক্লিক করুন।<br />
+              ২. অথবা ব্রাউজারটি বন্ধ করে পুনরায় খুলুন (পিসিতে <kbd className="bg-black/40 px-1.5 py-0.5 rounded text-[10px]">Ctrl + F5</kbd> চাপুন)।<br />
+              ৩. বন্ধুদের সাথে শেয়ার করার সময় সবসময় <strong className="text-emerald-300">ourjamalpur15117.web.app</strong> লিংকটি ব্যবহার করুন।
+            </p>
+          </div>
+        </div>
+
         {/* Local Storage & Offline Cache Management */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4 transition-colors duration-200">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

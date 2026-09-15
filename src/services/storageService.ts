@@ -1167,9 +1167,9 @@ export const storageService = {
   getAppVersionInfo: () => {
     const officialUrl = storageService.getOfficialLiveUrl();
     return {
-      version: '4.2.0',
-      versionName: 'v4.2 (Live Cloud & Fast Sync Edition)',
-      releaseDate: '২০২৬-০৮-৩১',
+      version: '4.5.0',
+      versionName: 'v4.5 (Live Fast Sync & Password Reset Edition)',
+      releaseDate: '২০২৬-০৯-১৫',
       lastSync: storageService.getLastCacheSyncTime(),
       author: 'মাসুদ রানা',
       status: 'সর্বশেষ সক্রিয় সংস্করণ (Up to Date)',
