@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { TabType, User as UserType, Upazila } from '../types';
 import { ThemeToggle } from './ThemeToggle';
+import { DatabaseSyncStatus } from './DatabaseSyncStatus';
 import jamalpurLogo from '../assets/images/jamalpur_emblem_logo_1788191831752.jpg';
 import { isUserAdmin } from '../services/authService';
 
@@ -294,6 +295,9 @@ export const Navbar: React.FC<Props> = ({
               )}
             </div>
 
+            {/* Database Realtime Sync Status Indicator */}
+            <DatabaseSyncStatus />
+
             {/* Theme Toggle in Navbar */}
             <div className="hidden sm:block">
               <ThemeToggle variant="dropdown" />
@@ -495,6 +499,15 @@ export const Navbar: React.FC<Props> = ({
               <span className="text-[11px] text-slate-500 dark:text-slate-400">রাতে চোখের সুরক্ষায় ডার্ক মোড ব্যবহার করুন</span>
             </div>
             <ThemeToggle variant="compact" />
+          </div>
+
+          {/* Mobile Database Sync Status Row */}
+          <div className="p-3 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">ডাটাবেজ সিঙ্ক অবস্থা</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">রিয়েলটাইম ক্লাউড সকেট স্ট্যাটাস</span>
+            </div>
+            <DatabaseSyncStatus variant="compact" />
           </div>
 
           {/* Mobile Feature Update Card */}

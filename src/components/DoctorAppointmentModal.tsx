@@ -17,6 +17,7 @@ import {
 import { collection, addDoc, doc, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { storageService } from '../services/storageService';
+import { syncStatusService } from '../services/syncStatusService';
 import { DoctorItem, User as UserType, DoctorAppointmentBooking } from '../types';
 
 interface Props {
@@ -85,6 +86,7 @@ export const DoctorAppointmentModal: React.FC<Props> = ({
     }
 
     setIsSubmitting(true);
+    syncStatusService.notifySyncStart('appointment-booking');
 
     const bookingId = `apt-${Date.now()}`;
     const feeAmount = doctor.consultationFee || doctor.fee || 500;
@@ -153,6 +155,7 @@ export const DoctorAppointmentModal: React.FC<Props> = ({
       }
     } finally {
       setIsSubmitting(false);
+      syncStatusService.notifySyncEnd();
     }
   };
 
